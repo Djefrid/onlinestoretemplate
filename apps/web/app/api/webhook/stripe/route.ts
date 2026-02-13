@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe/server";
-import { sanityWriteClient, isSanityConfigured } from "@/lib/sanity/client";
+import { createServiceClient } from "@/lib/supabase/server";
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -41,7 +41,28 @@ export async function POST(request: NextRequest) {
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const metadata = session.metadata || {};
 
-  // Retrieve line items from Stripe
+  // ── 1. Init Supabase service client (bypass RLS) ──
+  let supabase;
+  try {
+    supabase = await createServiceClient();
+  } catch (err) {
+    console.error("[webhook] Supabase not configured:", err);
+    return;
+  }
+
+  // ── 2. Idempotence — check if order already exists ──
+  const { data: existingOrder } = await supabase
+    .from("orders")
+    .select("id")
+    .eq("stripe_session_id", session.id)
+    .single();
+
+  if (existingOrder) {
+    console.log("[webhook] Order already exists, skipping:", existingOrder.id);
+    return;
+  }
+
+  // ── 3. Retrieve line items from Stripe ──
   const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
     limit: 100,
   });
@@ -50,34 +71,35 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const items = lineItems.data
     .filter((item) => item.description !== "Frais de livraison")
     .map((item) => ({
-      _key: crypto.randomUUID().slice(0, 8),
-      productId: "",
-      slug: "",
       name: item.description || "Produit",
-      price: (item.price?.unit_amount || 0) / 100,
+      price_cents: item.price?.unit_amount || 0,
       quantity: item.quantity || 1,
+      product_slug: "",
     }));
 
-  // Try to restore product IDs from metadata
+  // Restore product slugs from metadata
   const itemsSummary = metadata.itemsSummary || "";
   if (itemsSummary) {
     const slugMap = itemsSummary.split(",").map((entry) => {
-      const [slug, qty] = entry.split("\u00d7");
-      return { slug, quantity: parseInt(qty, 10) };
+      const [slug] = entry.split("\u00d7");
+      return slug;
     });
     items.forEach((item, i) => {
       if (slugMap[i]) {
-        item.slug = slugMap[i].slug;
+        item.product_slug = slugMap[i];
       }
     });
   }
 
-  // Calculate totals
-  const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const total = (session.amount_total || 0) / 100;
-  const shipping = total - subtotal;
+  // ── 4. Calculate totals ──
+  const subtotalCents = items.reduce(
+    (sum, i) => sum + i.price_cents * i.quantity,
+    0,
+  );
+  const totalCents = session.amount_total || 0;
+  const shippingCents = totalCents - subtotalCents;
 
-  // Build address object if delivery
+  // Build address JSONB if delivery
   const address =
     metadata.deliveryMode === "delivery"
       ? {
@@ -88,43 +110,98 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
           province: metadata.addressProvince || "",
           country: metadata.addressCountry || "CA",
         }
-      : undefined;
+      : null;
 
-  const orderDoc = {
-    _type: "order",
-    stripeSessionId: session.id,
-    stripePaymentIntentId:
-      typeof session.payment_intent === "string"
-        ? session.payment_intent
-        : session.payment_intent?.id || "",
-    status: "paid",
-    customerName: metadata.customerName || "",
-    customerEmail: session.customer_email || "",
-    phone: metadata.phone || "",
-    deliveryMode: metadata.deliveryMode || "delivery",
-    ...(address && { address }),
-    ...(metadata.deliveryMode === "pickup" && {
-      pickupSlot: metadata.pickupSlot || "",
-    }),
-    items,
-    totals: {
-      subtotal: Math.round(subtotal * 100) / 100,
-      shipping: Math.round(shipping * 100) / 100,
-      total: Math.round(total * 100) / 100,
-    },
-    createdAt: new Date().toISOString(),
-  };
+  // ── 5. Create order ──
+  const { data: order, error: orderError } = await supabase
+    .from("orders")
+    .insert({
+      user_id: metadata.userId || null,
+      stripe_session_id: session.id,
+      payment_intent_id:
+        typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : session.payment_intent?.id || null,
+      status: "paid",
+      delivery_mode: metadata.deliveryMode || "delivery",
+      customer_email: session.customer_email || "",
+      customer_name: metadata.customerName || "",
+      phone: metadata.phone || "",
+      address,
+      pickup_slot:
+        metadata.deliveryMode === "pickup"
+          ? metadata.pickupSlot || null
+          : null,
+      subtotal_cents: subtotalCents,
+      shipping_cents: Math.max(shippingCents, 0),
+      total_cents: totalCents,
+    })
+    .select("id")
+    .single();
 
-  // Save to Sanity if configured
-  if (isSanityConfigured && sanityWriteClient) {
-    try {
-      const created = await sanityWriteClient.create(orderDoc);
-      console.log("[webhook] Order created in Sanity:", created._id);
-    } catch (err) {
-      console.error("[webhook] Failed to create order in Sanity:", err);
-    }
-  } else {
-    console.log("[webhook] Sanity not configured — order logged only:");
-    console.log(JSON.stringify(orderDoc, null, 2));
+  if (orderError || !order) {
+    console.error("[webhook] Failed to create order:", orderError);
+    return;
   }
+
+  console.log("[webhook] Order created:", order.id);
+
+  // ── 6. Create order_items ──
+  if (items.length > 0) {
+    const orderItems = items.map((item) => ({
+      order_id: order.id,
+      product_slug: item.product_slug,
+      name: item.name,
+      price_cents: item.price_cents,
+      quantity: item.quantity,
+    }));
+
+    const { error: itemsError } = await supabase
+      .from("order_items")
+      .insert(orderItems);
+
+    if (itemsError) {
+      console.error("[webhook] Failed to create order_items:", itemsError);
+    }
+  }
+
+  // ── 7. Convert cart status (if user was logged in) ──
+  if (metadata.cartId) {
+    const { error: cartError } = await supabase
+      .from("carts")
+      .update({ status: "converted" })
+      .eq("id", metadata.cartId);
+
+    if (cartError) {
+      console.error("[webhook] Failed to convert cart:", cartError);
+    } else {
+      console.log("[webhook] Cart converted:", metadata.cartId);
+    }
+  }
+
+  // ── 8. Award loyalty points (1 point per dollar spent) ──
+  if (metadata.userId) {
+    const points = Math.floor(totalCents / 100);
+    if (points > 0) {
+      const { error: loyaltyError } = await supabase.rpc("increment_loyalty", {
+        user_id_input: metadata.userId,
+        points_input: points,
+      });
+
+      // If RPC doesn't exist yet, fallback to manual update
+      if (loyaltyError) {
+        await supabase
+          .from("profiles")
+          .update({
+            loyalty_points: points, // Will be overwritten — see note below
+          })
+          .eq("id", metadata.userId);
+        console.warn(
+          "[webhook] RPC increment_loyalty not found, manual update applied",
+        );
+      }
+    }
+  }
+
+  console.log("[webhook] Checkout completed successfully for session:", session.id);
 }

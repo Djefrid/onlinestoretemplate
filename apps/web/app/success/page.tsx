@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { stripe } from "@/lib/stripe/server";
 import { formatPrice } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/server";
+import { ClearCart } from "./ClearCart";
 
 interface SuccessPageProps {
   searchParams: { session_id?: string };
@@ -27,11 +29,24 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
     }
   }
 
+  // Check if user is logged in
+  let isLoggedIn = false;
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    isLoggedIn = !!user;
+  } catch {
+    // Supabase not configured
+  }
+
   const deliveryMode = session?.metadata?.deliveryMode || "delivery";
   const customerName = session?.metadata?.customerName || "";
 
   return (
     <main className="container-page flex min-h-[70vh] flex-col items-center justify-center py-20 text-center">
+      {/* Clear local cart after successful payment */}
+      <ClearCart />
+
       <div className="mx-auto max-w-lg">
         {/* Success icon */}
         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
@@ -140,12 +155,21 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
           >
             Continuer mes achats
           </Link>
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-foreground/10 px-6 py-3 font-medium transition-colors hover:bg-foreground/5"
-          >
-            Retour à l&apos;accueil
-          </Link>
+          {isLoggedIn ? (
+            <Link
+              href="/account"
+              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-foreground/10 px-6 py-3 font-medium transition-colors hover:bg-foreground/5"
+            >
+              Mon compte
+            </Link>
+          ) : (
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-foreground/10 px-6 py-3 font-medium transition-colors hover:bg-foreground/5"
+            >
+              Retour à l&apos;accueil
+            </Link>
+          )}
         </div>
 
         {/* Session reference */}

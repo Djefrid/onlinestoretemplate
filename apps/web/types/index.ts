@@ -72,30 +72,55 @@ export interface CheckoutPayload {
   pickupSlot?: string;
 }
 
-/* ── Order (Sanity) ───────────────────────────── */
+/* ── Order (Supabase) ─────────────────────────── */
 
 export interface Order {
-  _id: string;
-  stripeSessionId: string;
-  stripePaymentIntentId?: string;
-  status: "pending" | "paid" | "shipped" | "delivered" | "cancelled";
-  customerName: string;
-  customerEmail: string;
-  phone: string;
-  deliveryMode: DeliveryMode;
+  id: string;
+  user_id?: string;
+  stripe_session_id: string;
+  payment_intent_id?: string;
+  status: "pending" | "paid" | "shipped" | "delivered" | "cancelled" | "refunded";
+  delivery_mode: DeliveryMode;
+  customer_email: string;
+  customer_name: string;
+  phone?: string;
   address?: CheckoutPayload["address"];
-  pickupSlot?: string;
-  items: {
-    productId: string;
-    slug: string;
-    name: string;
-    price: number;
-    quantity: number;
-  }[];
-  totals: {
-    subtotal: number;
-    shipping: number;
-    total: number;
-  };
-  createdAt: string;
+  pickup_slot?: string;
+  subtotal_cents: number;
+  shipping_cents: number;
+  total_cents: number;
+  created_at: string;
+  order_items?: OrderItem[];
+}
+
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  product_slug: string;
+  name: string;
+  price_cents: number;
+  quantity: number;
+}
+
+/* ── Profile (Supabase) ──────────────────────── */
+
+export interface Profile {
+  id: string;
+  full_name?: string;
+  phone?: string;
+  loyalty_points: number;
+  created_at: string;
+}
+
+/* ── Review (Supabase) ───────────────────────── */
+
+export interface Review {
+  id: string;
+  user_id: string;
+  product_slug: string;
+  rating: number;
+  comment?: string;
+  is_verified: boolean;
+  created_at: string;
+  profiles?: { full_name: string };
 }

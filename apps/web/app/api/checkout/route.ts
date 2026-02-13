@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe/server";
 import { checkoutSchema } from "@/lib/validators/checkout";
+import { createClient } from "@/lib/supabase/server";
 
 const SHIPPING_COST = parseFloat(process.env.NEXT_PUBLIC_SHIPPING_COST || "5.99");
 const FREE_SHIPPING_THRESHOLD = parseFloat(
@@ -23,6 +24,27 @@ export async function POST(request: NextRequest) {
     }
 
     const data = result.data;
+
+    // Get current user (optional — guests can checkout too)
+    let userId: string | undefined;
+    let cartId: string | undefined;
+    try {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        userId = user.id;
+        // Get active cart id
+        const { data: cart } = await supabase
+          .from("carts")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .single();
+        if (cart) cartId = cart.id;
+      }
+    } catch {
+      // Supabase not configured or auth failed — continue as guest
+    }
 
     // Calculate shipping
     const subtotal = data.items.reduce(
@@ -76,6 +98,8 @@ export async function POST(request: NextRequest) {
         deliveryMode: data.deliveryMode,
         customerName: data.customerName,
         phone: data.phone,
+        ...(userId && { userId }),
+        ...(cartId && { cartId }),
         ...(data.deliveryMode === "pickup" && {
           pickupSlot: data.pickupSlot || "",
         }),

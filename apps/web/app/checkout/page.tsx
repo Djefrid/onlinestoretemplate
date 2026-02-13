@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "@/lib/cart/store";
+import { createClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,33 @@ export default function CheckoutPage() {
     province: "QC",
     pickupSlot: "",
   });
+
+  // Pre-fill form from Supabase profile if user is logged in
+  useEffect(() => {
+    const prefill = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, phone")
+          .eq("id", user.id)
+          .single();
+
+        setForm((prev) => ({
+          ...prev,
+          customerEmail: user.email || prev.customerEmail,
+          customerName: profile?.full_name || prev.customerName,
+          phone: profile?.phone || prev.phone,
+        }));
+      } catch {
+        // Supabase not configured — keep empty form
+      }
+    };
+    prefill();
+  }, []);
 
   const updateField = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
