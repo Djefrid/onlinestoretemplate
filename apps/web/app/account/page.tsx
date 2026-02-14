@@ -4,6 +4,8 @@ import { formatPrice } from "@/lib/utils";
 import { AccountActions } from "./AccountActions";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Mon compte",
 };

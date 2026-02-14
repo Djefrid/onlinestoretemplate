@@ -291,6 +291,26 @@ Compatible Coolify : pointer le docker-compose.yml et configurer les variables d
 - [ ] App accessible sur port 3000
 - [ ] Variables d'environnement Supabase + Stripe correctement passées
 
+## Guide de deploiement client
+
+Un guide PDF complet est disponible pour configurer le site pour un nouveau client :
+
+**[GUIDE_DEPLOIEMENT.pdf](GUIDE_DEPLOIEMENT.pdf)** — 14 sections couvrant :
+- Configuration de chaque service (Sanity, Supabase, Stripe, Cal.com)
+- Alimentation du catalogue (categories, produits, images)
+- Tests fonctionnels (checklists completes)
+- Deploiement en production (Vercel, domaine, SSL)
+- Personnalisation pour un nouveau client
+- Depannage (FAQ)
+
+### Regenerer le PDF
+
+Si le guide markdown (`GUIDE_DEPLOIEMENT.md`) a ete modifie :
+
+```bash
+npx md-to-pdf GUIDE_DEPLOIEMENT.md
+```
+
 ## Licence
 
-Projet privé.
+Projet prive.
