@@ -1,8 +1,23 @@
 "use client";
 
+import Image from "next/image";
 import { useCartStore } from "@/lib/cart/store";
 import { formatPrice } from "@/lib/utils";
 import type { CartItem as CartItemType } from "@/types";
+
+/**
+ * Build a Sanity CDN image URL from a _ref string.
+ * Ref format: "image-{id}-{WxH}-{ext}"
+ */
+function sanityImageUrl(ref: string, width = 200): string | null {
+  const match = ref.match(/^image-(.+)-(\d+x\d+)-(\w+)$/);
+  if (!match) return null;
+  const [, id, dims, ext] = match;
+  const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
+  const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
+  if (!projectId) return null;
+  return `https://cdn.sanity.io/images/${projectId}/${dataset}/${id}-${dims}.${ext}?w=${width}&h=${width}&fit=crop`;
+}
 
 interface CartItemProps {
   item: CartItemType;
@@ -12,12 +27,25 @@ export function CartItem({ item }: CartItemProps) {
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
 
+  const imageUrl = item.image ? sanityImageUrl(item.image) : null;
+
   return (
     <div className="flex gap-4 py-6">
-      {/* Image placeholder */}
-      <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl bg-foreground/5 text-3xl">
-        🛒
-      </div>
+      {imageUrl ? (
+        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-foreground/5">
+          <Image
+            src={imageUrl}
+            alt={item.name}
+            fill
+            className="object-cover"
+            sizes="96px"
+          />
+        </div>
+      ) : (
+        <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl bg-foreground/5 text-3xl">
+          🛒
+        </div>
+      )}
 
       {/* Info */}
       <div className="flex flex-1 flex-col justify-between">

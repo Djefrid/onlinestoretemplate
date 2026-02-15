@@ -81,6 +81,15 @@ function LoginForm() {
           />
         </div>
 
+        <div className="text-right">
+          <Link
+            href="/auth/reset-password"
+            className="text-xs text-foreground/40 hover:text-accent"
+          >
+            Mot de passe oublié ?
+          </Link>
+        </div>
+
         {error && (
           <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
             {error}

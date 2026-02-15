@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useScrollHeader } from "@/hooks/useScrollHeader";
 import { useCartStore } from "@/lib/cart/store";
@@ -13,7 +14,12 @@ const navigation = [
   { label: "Rendez-vous", href: "/appointments" },
 ];
 
-export function Header() {
+interface HeaderProps {
+  shopName: string;
+  logoUrl?: string;
+}
+
+export function Header({ shopName, logoUrl }: HeaderProps) {
   const scrolled = useScrollHeader(20);
   const totalItems = useCartStore((s) => s.totalItems());
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -54,11 +60,21 @@ export function Header() {
       <nav className="container-page flex h-16 items-center justify-between sm:h-20">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-2xl" aria-hidden="true">
-            🌍
-          </span>
+          {logoUrl ? (
+            <Image
+              src={logoUrl}
+              alt={shopName}
+              width={32}
+              height={32}
+              className="h-8 w-8 rounded-full object-cover"
+            />
+          ) : (
+            <span className="text-2xl" aria-hidden="true">
+              🌍
+            </span>
+          )}
           <span className="font-display text-xl font-bold tracking-tight">
-            Épicerie Africaine
+            {shopName}
           </span>
         </Link>
 

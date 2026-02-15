@@ -1,3 +1,50 @@
+/* ── Site Settings (Sanity singleton) ─────────── */
+
+export interface SiteSettings {
+  shopName: string;
+  tagline?: string;
+  logoUrl?: string;
+  email?: string;
+  supportEmail?: string;
+  phone?: string;
+  whatsapp?: string;
+  address?: {
+    line1?: string;
+    line2?: string;
+    city?: string;
+    province?: string;
+    postalCode?: string;
+    country?: string;
+    googleMapsUrl?: string;
+  };
+  openingHours?: string;
+  deliveryZones?: string;
+  pickupInstructions?: string;
+  announcementBar?: {
+    enabled: boolean;
+    text?: string;
+    linkLabel?: string;
+    linkUrl?: string;
+  };
+  hero?: {
+    bannerUrl?: string;
+    bannerAlt?: string;
+    heroTitle?: string;
+    heroSubtitle?: string;
+  };
+  shopStatus?: {
+    isOpen: boolean;
+    closedMessage?: string;
+    reopenDate?: string;
+  };
+  socials?: {
+    instagram?: string;
+    facebook?: string;
+    tiktok?: string;
+    youtube?: string;
+  };
+}
+
 /* ── Sanity document types ─────────────────────── */
 
 export interface Category {

@@ -310,7 +310,7 @@ export default function CheckoutPage() {
                 Créneau de ramassage
               </h2>
               <p className="mb-3 text-sm text-foreground/60">
-                📍 Adresse du magasin : 1234 Rue Exemple, Montréal, QC
+                📍 L&apos;adresse de retrait vous sera communiquée par email après confirmation de la commande.
               </p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {PICKUP_SLOTS.map((slot) => (
@@ -440,6 +440,7 @@ export default function CheckoutPage() {
 
 /* ── Reusable input field ─────────────── */
 
+/*test*/
 function InputField({
   label,
   value,
