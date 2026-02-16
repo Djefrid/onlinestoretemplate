@@ -37,7 +37,7 @@ export function ProductCard({ product }: ProductCardProps) {
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-accent/5 to-accent/10 text-5xl transition-transform duration-500 group-hover:scale-105">
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10 text-5xl transition-transform duration-500 group-hover:scale-105">
             {product.tags.includes("Pimenté")
               ? "🌶️"
               : product.tags.includes("Surgelé")
@@ -63,7 +63,7 @@ export function ProductCard({ product }: ProductCardProps) {
       {/* Floating add button */}
       <button
         onClick={() => addItem(product)}
-        className="absolute bottom-[4.5rem] right-3 flex h-10 w-10 items-center justify-center rounded-full bg-accent text-white shadow-lg transition-all hover:bg-accent-dark hover:shadow-xl active:scale-95"
+        className="absolute bottom-[4.5rem] right-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-all hover:bg-primary-dark hover:shadow-xl active:scale-95"
         aria-label={`Ajouter ${product.title} au panier`}
       >
         <svg
@@ -87,7 +87,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="min-w-0">
           <Link
             href={`/product/${product.slug}`}
-            className="block truncate text-sm font-medium transition-colors hover:text-accent"
+            className="block truncate text-sm font-medium transition-colors hover:text-primary"
           >
             {product.title}
           </Link>

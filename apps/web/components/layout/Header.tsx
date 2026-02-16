@@ -53,7 +53,7 @@ export function Header({ shopName, logoUrl }: HeaderProps) {
       className={cn(
         "fixed inset-x-0 top-0 z-50 transition-all duration-300",
         scrolled
-          ? "bg-white/95 shadow-sm backdrop-blur-sm"
+          ? "bg-card/95 shadow-sm backdrop-blur-sm"
           : "bg-transparent",
       )}
     >
@@ -135,7 +135,7 @@ export function Header({ shopName, logoUrl }: HeaderProps) {
               />
             </svg>
             {mounted && totalItems > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white">
+              <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                 {totalItems > 99 ? "99+" : totalItems}
               </span>
             )}
@@ -188,7 +188,7 @@ export function Header({ shopName, logoUrl }: HeaderProps) {
               />
             </svg>
             {mounted && totalItems > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white">
+              <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                 {totalItems > 99 ? "99+" : totalItems}
               </span>
             )}
@@ -238,7 +238,7 @@ export function Header({ shopName, logoUrl }: HeaderProps) {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="border-t border-foreground/5 bg-white px-4 pb-4 md:hidden">
+        <div className="border-t border-border bg-card px-4 pb-4 md:hidden">
           {navigation.map((item) => (
             <Link
               key={item.href}

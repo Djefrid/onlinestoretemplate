@@ -41,12 +41,14 @@ pdf_options:
 6. [Configuration Stripe (Paiements)](#6-configuration-stripe-paiements)
 7. [Configuration Cal.com (Rendez-vous)](#7-configuration-calcom-rendez-vous)
 8. [Alimenter le catalogue (Sanity Studio)](#8-alimenter-le-catalogue-sanity-studio)
-9. [Tests fonctionnels](#9-tests-fonctionnels)
-10. [Deploiement en production](#10-deploiement-en-production)
-11. [Personnalisation pour un nouveau client](#11-personnalisation-pour-un-nouveau-client)
-12. [Maintenance et operations courantes](#12-maintenance-et-operations-courantes)
-13. [Checklist de livraison](#13-checklist-de-livraison)
-14. [Depannage (FAQ)](#14-depannage-faq)
+9. [Configuration Admin Hub](#9-configuration-admin-hub)
+10. [Securite](#10-securite)
+11. [Tests fonctionnels](#11-tests-fonctionnels)
+12. [Deploiement en production](#12-deploiement-en-production)
+13. [Personnalisation pour un nouveau client](#13-personnalisation-pour-un-nouveau-client)
+14. [Maintenance et operations courantes](#14-maintenance-et-operations-courantes)
+15. [Checklist de livraison](#15-checklist-de-livraison)
+16. [Depannage (FAQ)](#16-depannage-faq)
 
 ---
 
@@ -92,8 +94,13 @@ my-shop/
 ├── apps/
 │   ├── web/                    # Application Next.js (frontend + API)
 │   │   ├── app/                # Pages et routes (App Router)
+│   │   │   ├── admin-hub/      # Panel admin independant (login + dashboard)
+│   │   │   ├── auth/           # Pages d'authentification publiques
+│   │   │   └── api/            # Routes API (checkout, webhook)
 │   │   ├── components/         # Composants React reutilisables
+│   │   │   └── admin/          # Composants admin (AdminHeader, AdminHubCard)
 │   │   ├── lib/                # Clients (Sanity, Supabase, Stripe)
+│   │   │   └── auth/           # Guards (requireAdmin)
 │   │   ├── hooks/              # Hooks React personnalises
 │   │   ├── types/              # Types TypeScript
 │   │   ├── styles/             # CSS global + config Tailwind
@@ -337,12 +344,16 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIs...
 1. Dans le dashboard Supabase, aller dans **SQL Editor** (icone terminal dans la sidebar)
 2. Cliquer **"New Query"**
 3. Ouvrir le fichier `supabase/migrations/` de votre projet
-4. **Copier-coller le contenu de CHAQUE fichier de migration** dans l'ordre chronologique :
-   - `001_create_tables.sql` (ou similaire) — Tables principales
+4. **Option rapide** : Copier-coller TOUT le contenu de `supabase/migrations/all.sql` et cliquer **"Run"**
+
+   **Option detaillee** (fichier par fichier, dans l'ordre) :
+   - `001_init.sql` — Tables principales + trigger auto-profil
    - `002_rls_policies.sql` — Regles de securite Row Level Security
    - `003_indexes.sql` — Index de performance
-   - `004_functions.sql` — Fonctions (trigger auto-profil, fidelite)
-   - `005_reviews.sql` — Table des avis (si existe)
+   - `004_loyalty_rpc.sql` — Fonction points de fidelite
+   - `005_admin_role.sql` — Colonne role (admin/customer) dans profiles
+   - `006_security_fixes.sql` — Correctifs securite (protection role, RPC, search_path)
+   - `007_audit_logs.sql` — Table audit_logs pour tracabilite admin
 5. Pour chaque fichier, coller le SQL et cliquer **"Run"** (ou `Ctrl+Enter`)
 6. Verifier le message : **"Success. No rows returned."**
 
@@ -352,7 +363,7 @@ Aller dans **Table Editor** (sidebar) et confirmer la presence de :
 
 | Table | Description | Colonnes principales |
 |-------|------------|---------------------|
-| `profiles` | Profils utilisateur | id, full_name, phone, loyalty_points |
+| `profiles` | Profils utilisateur | id, full_name, phone, loyalty_points, role (admin/customer) |
 | `carts` | Paniers persistants | id, user_id, status (active/converted) |
 | `cart_items` | Articles dans les paniers | cart_id, product_slug, name, price_cents, quantity |
 | `orders` | Commandes (creees par webhook) | stripe_session_id, status, customer_email, total_cents |
@@ -382,7 +393,7 @@ Pour faciliter les tests en developpement :
 
 1. Aller dans **Authentication > Policies**
 2. Confirmer que chaque table a ses policies de securite :
-   - `profiles` : lecture/modification de son propre profil uniquement
+   - `profiles` : lecture/modification de son propre profil (le champ `role` ne peut PAS etre modifie par l'utilisateur)
    - `carts` / `cart_items` : CRUD sur ses propres paniers
    - `orders` / `order_items` : lecture de ses propres commandes
    - `reviews` : lecture publique, CRUD sur ses propres avis
@@ -652,7 +663,177 @@ Apres avoir cree les produits :
 
 ---
 
-## 9. Tests fonctionnels
+## 9. Configuration Admin Hub
+
+Le panel admin (`/admin-hub`) est une zone completement independante du site public. Il possede son propre formulaire de connexion, son propre header et son propre design (dark mode).
+
+### Etape 9.1 — Comprendre l'architecture admin
+
+| Element | Description |
+|---------|-------------|
+| `/admin-hub/login` | Formulaire de connexion admin (dark mode, pas de creation de compte) |
+| `/admin-hub` | Dashboard avec 4 cartes vers les services externes |
+| `AdminHeader` | Header minimaliste : badge Admin, Voir le site, Deconnexion |
+| `requireAdmin()` | Guard serveur qui verifie le role `admin` dans la table `profiles` |
+
+**Differences avec le site public :**
+- Pas de header/footer du site public
+- Pas de possibilite de creer un compte
+- Design dark mode independant
+- Verrouillage apres 5 tentatives de connexion echouees
+- Pages non indexees par les moteurs de recherche
+
+### Etape 9.2 — Creer le premier administrateur
+
+> **IMPORTANT** : Le role admin ne peut etre attribue que via SQL. Aucun utilisateur ne peut se promouvoir lui-meme grace a la protection RLS.
+
+#### Option A — Via le dashboard Supabase (recommande)
+
+1. Aller dans **Authentication > Users > Add user > Create new user**
+2. Remplir :
+   - **Email** : l'email de l'administrateur
+   - **Password** : un mot de passe fort (minimum 8 caracteres)
+   - Cocher **Auto Confirm User**
+3. Cliquer **Create user**
+4. Aller dans **SQL Editor > New Query**
+5. Executer cette requete (remplacer l'email) :
+
+```sql
+UPDATE profiles SET role = 'admin'
+WHERE id = (SELECT id FROM auth.users WHERE email = 'admin@exemple.com');
+```
+
+6. Verifier avec :
+
+```sql
+SELECT p.role, u.email
+FROM profiles p
+JOIN auth.users u ON u.id = p.id
+WHERE p.role = 'admin';
+```
+
+#### Option B — Via la ligne de commande (Supabase CLI)
+
+```bash
+# 1. Installer le CLI
+npm install -g supabase
+
+# 2. Se connecter
+supabase login
+
+# 3. Lier le projet (le project-ref est dans l'URL du dashboard)
+supabase link --project-ref VOTRE_PROJECT_REF
+
+# 4. Promouvoir en admin
+supabase db execute --sql "UPDATE profiles SET role = 'admin' WHERE id = (SELECT id FROM auth.users WHERE email = 'admin@exemple.com');"
+```
+
+### Etape 9.3 — Configurer les URLs des dashboards (optionnel)
+
+Dans `apps/web/.env.local`, vous pouvez personnaliser les liens des cartes admin :
+
+```env
+# URLs des dashboards (optionnel — des fallbacks sont utilises par defaut)
+NEXT_PUBLIC_SANITY_STUDIO_URL=/studio
+NEXT_PUBLIC_STRIPE_DASHBOARD_URL=https://dashboard.stripe.com/
+NEXT_PUBLIC_SUPABASE_DASHBOARD_URL=https://supabase.com/dashboard
+NEXT_PUBLIC_CAL_DASHBOARD_URL=https://app.cal.com/availability
+```
+
+### Etape 9.4 — Tester l'acces admin
+
+1. Lancer le serveur : `npm run dev -- -p 3007`
+2. Aller sur `http://localhost:3007/admin-hub`
+3. Vous devez etre redirige vers `/admin-hub/login`
+4. Se connecter avec le compte admin cree a l'etape 9.2
+5. Verifier :
+   - Le dashboard s'affiche avec les 4 cartes
+   - Le header affiche : badge Admin, Voir le site, Deconnexion
+   - "Voir le site" ouvre le site dans un nouvel onglet
+   - "Deconnexion" redirige vers `/admin-hub/login`
+   - Un compte non-admin est refuse avec le message "Acces refuse"
+
+---
+
+## 10. Securite
+
+### 10.1 — Headers HTTP de securite
+
+Tous les headers sont configures dans `apps/web/next.config.mjs` :
+
+| Header | Protection |
+|--------|------------|
+| `Content-Security-Policy` | Empeche l'injection de scripts malveillants (XSS) |
+| `Strict-Transport-Security` | Force HTTPS avec preload (2 ans) |
+| `X-Frame-Options: DENY` | Empeche l'integration du site dans une iframe (clickjacking) |
+| `X-Content-Type-Options: nosniff` | Empeche le navigateur de deviner le type MIME |
+| `Referrer-Policy` | Controle les informations envoyees dans le header Referer |
+| `Permissions-Policy` | Desactive camera, micro, geoloc, paiement, USB, gyroscope, capture ecran |
+| `Cross-Origin-Opener-Policy` | Isole la fenetre des attaques cross-origin |
+| `Cross-Origin-Resource-Policy` | Protege contre les attaques side-channel (Spectre) |
+| `Cache-Control` (API) | `no-store, max-age=0` sur toutes les routes `/api/*` |
+
+> Le header `X-Powered-By` est supprime (`poweredByHeader: false`) pour masquer le framework.
+
+### 10.2 — Protections de la base de donnees
+
+| Protection | Description |
+|-----------|-------------|
+| **RLS (Row Level Security)** | Active sur TOUTES les tables. Chaque utilisateur ne voit que ses propres donnees |
+| **Protection du role** | Un utilisateur ne peut PAS modifier son propre champ `role` (politique `WITH CHECK`) |
+| **Fonction loyalty restreinte** | `increment_loyalty` ne peut etre appelee que par le `service_role` (webhook) |
+| **search_path securise** | Toutes les fonctions `SECURITY DEFINER` ont `SET search_path = public` |
+
+### 10.3 — Protections applicatives
+
+| Protection | Description |
+|-----------|-------------|
+| **Verification des prix** | Les prix sont recuperes depuis Sanity cote serveur au checkout (jamais les prix du client) |
+| **Signature webhook** | Chaque requete webhook Stripe est verifiee avec `constructEvent()` |
+| **Idempotence** | Les commandes dupliquees sont detectees via `stripe_session_id` UNIQUE + `maybeSingle()` |
+| **Open redirect** | Toutes les redirections auth sont validees (doit commencer par `/`, pas `//`) |
+| **Mot de passe** | Minimum 8 caracteres (norme NIST SP 800-63B) |
+| **Cookies** | `SameSite=Lax` + `Secure=true` en production |
+| **Erreurs masquees** | Les erreurs webhook ne revelent pas de details internes |
+| **CVE-2025-29927** | Header `x-middleware-subrequest` bloque pour empecher le bypass du middleware |
+| **Honeypot anti-bot** | Champ invisible sur le checkout rejette les soumissions automatisees |
+| **Session admin** | Expiration forcee apres 4 heures, re-authentification obligatoire |
+| **Audit logs** | Table `audit_logs` pour tracer toutes les actions admin sensibles |
+| **Service client** | Validation obligatoire des variables `SUPABASE_SERVICE_ROLE_KEY` avant utilisation |
+| **security.txt** | Route `/.well-known/security.txt` conforme RFC 9116 |
+
+### 10.4 — Regles de securite a respecter
+
+> **CRITIQUE** : Ne JAMAIS faire les actions suivantes :
+
+1. Prefixer une cle secrete avec `NEXT_PUBLIC_` (elle serait exposee dans le navigateur)
+2. Commiter un fichier `.env.local` ou `.env` dans Git
+3. Partager la cle `SUPABASE_SERVICE_ROLE_KEY` par email ou Slack
+4. Desactiver RLS sur une table en production
+5. Utiliser `getSession()` au lieu de `getUser()` pour verifier l'authentification serveur
+6. Mettre des mots de passe dans `.env.example` ou dans le code source
+
+### 10.5 — Migration de securite (bases existantes)
+
+Si le projet a deja ete deploye AVANT ces correctifs, executer ces migrations :
+
+1. Aller dans **Supabase > SQL Editor > New Query**
+2. Copier-coller le contenu de `supabase/migrations/006_security_fixes.sql` → **Run**
+3. Copier-coller le contenu de `supabase/migrations/007_audit_logs.sql` → **Run**
+4. Verifier : **"Success. No rows returned."**
+
+Migration 006 corrige :
+- La politique RLS `profiles` (empeche la modification du role)
+- L'acces public a `increment_loyalty` (revoque)
+- Le `search_path` sur les fonctions `SECURITY DEFINER`
+
+Migration 007 ajoute :
+- Table `audit_logs` pour tracer les actions admin (connexion, modifications, etc.)
+- RLS total : aucun acces via l'API publique, ecriture uniquement par service_role
+
+---
+
+## 11. Tests fonctionnels
 
 Avant de livrer le site, effectuer TOUS les tests suivants.
 
@@ -712,7 +893,32 @@ Avant de livrer le site, effectuer TOUS les tests suivants.
 - [ ] **Deconnexion** : fonctionne correctement, retour en mode invite
 - [ ] **Fusion panier** : ajouter des produits en invite → se connecter → les produits sont conserves
 
-### Test 5 : Cas limites
+### Test 5 : Admin Hub
+
+**Pre-requis** : Supabase configure, utilisateur admin cree (section 9).
+
+- [ ] `/admin-hub` redirige vers `/admin-hub/login` si non connecte
+- [ ] Formulaire admin : design dark mode, pas de lien "Creer un compte"
+- [ ] Connexion avec un compte admin : acces au dashboard
+- [ ] Connexion avec un compte client (non admin) : message "Acces refuse"
+- [ ] Verrouillage apres 5 tentatives echouees
+- [ ] Dashboard : 4 cartes visibles (Sanity, Stripe, Supabase, Cal.com)
+- [ ] Header admin : badge Admin, "Voir le site" (nouvel onglet), "Deconnexion"
+- [ ] Deconnexion redirige vers `/admin-hub/login`
+- [ ] Pas de header/footer du site public visible sur les pages admin
+- [ ] Les pages admin ne sont pas indexees (verifier avec `robots.txt` ou `<meta>`)
+
+### Test 6 : Securite
+
+- [ ] Headers HTTP presents : verifier avec https://securityheaders.com
+- [ ] `X-Powered-By` absent des reponses HTTP
+- [ ] Un utilisateur normal ne peut PAS modifier son role dans `profiles`
+  - Tester via Supabase JS : `supabase.from('profiles').update({role:'admin'}).eq('id', user.id)` → doit echouer
+- [ ] `increment_loyalty` non appelable par un utilisateur authentifie
+  - Tester : `supabase.rpc('increment_loyalty', {user_id_input: id, points_input: 9999})` → doit echouer
+- [ ] Redirect auth : impossible de rediriger vers un site externe apres login
+
+### Test 7 : Cas limites
 
 - [ ] Produit en rupture de stock (stock = 0) : bouton "Rupture de stock" desactive
 - [ ] Checkout avec panier vide : redirection vers la boutique
@@ -721,17 +927,17 @@ Avant de livrer le site, effectuer TOUS les tests suivants.
 
 ---
 
-## 10. Deploiement en production
+## 12. Deploiement en production
 
 ### Option recommandee : Vercel
 
-#### Etape 10.1 — Creer un compte Vercel
+#### Etape 12.1 — Creer un compte Vercel
 
 1. Aller sur **https://vercel.com**
 2. Se connecter avec **GitHub** (recommande)
 3. Autoriser l'acces au repository du projet
 
-#### Etape 10.2 — Importer le projet
+#### Etape 12.2 — Importer le projet
 
 1. Cliquer **"Add New" > "Project"**
 2. Selectionner le repository Git
@@ -741,7 +947,7 @@ Avant de livrer le site, effectuer TOUS les tests suivants.
    - **Build Command** : `npm run build` (par defaut)
    - **Output Directory** : `.next` (par defaut)
 
-#### Etape 10.3 — Configurer les variables d'environnement
+#### Etape 12.3 — Configurer les variables d'environnement
 
 Dans **Settings > Environment Variables**, ajouter TOUTES les variables :
 
@@ -777,13 +983,13 @@ NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD=75
 > **SECURITE** : En production, utiliser les cles **LIVE** de Stripe (`sk_live_`, `pk_live_`), pas les cles de test.
 > Verifier que l'identite est validee dans le dashboard Stripe avant de passer en live.
 
-#### Etape 10.4 — Deployer
+#### Etape 12.4 — Deployer
 
 1. Cliquer **"Deploy"**
 2. Attendre la fin du build (~2-3 minutes)
 3. Vercel fournit une URL (ex: `epicerie-africaine.vercel.app`)
 
-#### Etape 10.5 — Configurer le domaine personnalise
+#### Etape 12.5 — Configurer le domaine personnalise
 
 1. Dans Vercel, aller dans **Settings > Domains**
 2. Ajouter le domaine du client (ex: `epicerie-africaine.ca`)
@@ -793,7 +999,7 @@ NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD=75
 4. Attendre la propagation DNS (~5-30 minutes)
 5. Vercel configure automatiquement le certificat SSL (HTTPS)
 
-#### Etape 10.6 — Mises a jour post-deploiement
+#### Etape 12.6 — Mises a jour post-deploiement
 
 Apres le deploiement, mettre a jour :
 
@@ -807,11 +1013,11 @@ Apres le deploiement, mettre a jour :
 
 ---
 
-## 11. Personnalisation pour un nouveau client
+## 13. Personnalisation pour un nouveau client
 
 Quand tu configures le site pour un nouveau client, voici les elements a adapter :
 
-### 11.1 — Branding
+### 13.1 — Branding
 
 | Element | Fichier(s) a modifier | Quoi changer |
 |---------|----------------------|-------------|
@@ -821,7 +1027,7 @@ Quand tu configures le site pour un nouveau client, voici les elements a adapter
 | Favicon | `apps/web/public/favicon.ico` | Remplacer |
 | Meta SEO | `apps/web/app/layout.tsx` | Title, description, OG images |
 
-### 11.2 — Couleurs (Design Tokens)
+### 13.2 — Couleurs (Design Tokens)
 
 Les couleurs sont centralisees dans `tailwind.config.ts` :
 
@@ -837,7 +1043,7 @@ colors: {
 }
 ```
 
-### 11.3 — Contenu legal
+### 13.3 — Contenu legal
 
 | Page | Fichier | A adapter |
 |------|---------|-----------|
@@ -846,7 +1052,7 @@ colors: {
 | Retours | `apps/web/app/legal/refunds/page.tsx` | Delais, conditions |
 | Mentions legales | `apps/web/app/legal/imprint/page.tsx` | Raison sociale, SIRET/NEQ, adresse |
 
-### 11.4 — Livraison
+### 13.4 — Livraison
 
 Dans `.env.local` :
 
@@ -855,7 +1061,7 @@ NEXT_PUBLIC_SHIPPING_COST=5.99          # Frais de livraison
 NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD=75  # Seuil livraison gratuite
 ```
 
-### 11.5 — Devise
+### 13.5 — Devise
 
 La devise par defaut est **CAD** (Dollar canadien).
 Pour changer en EUR, modifier dans Sanity les produits (champ `currency`).
@@ -863,7 +1069,7 @@ Le format d'affichage est gere dans le composant `ProductCard`.
 
 ---
 
-## 12. Maintenance et operations courantes
+## 14. Maintenance et operations courantes
 
 ### Ajouter/modifier des produits
 
@@ -893,7 +1099,7 @@ Le format d'affichage est gere dans le composant `ProductCard`.
 
 ---
 
-## 13. Checklist de livraison
+## 15. Checklist de livraison
 
 Avant de livrer le site au client, verifier chaque point :
 
@@ -905,6 +1111,24 @@ Avant de livrer le site au client, verifier chaque point :
 - [ ] Cal.com : (si applicable) event type cree, URL configuree
 - [ ] Variables d'environnement : TOUTES remplies dans `.env.local` ET sur l'hebergeur
 - [ ] `.env.local` est dans `.gitignore`
+
+### Admin
+
+- [ ] Utilisateur admin cree dans Supabase (section 9.2)
+- [ ] Connexion admin testee sur `/admin-hub/login`
+- [ ] Les 4 cartes du dashboard pointent vers les bons dashboards
+- [ ] Migration 006 (securite) appliquee sur la base
+
+### Securite
+
+- [ ] Migration `006_security_fixes.sql` executee
+- [ ] Migration `007_audit_logs.sql` executee
+- [ ] Headers HTTP verifies (CSP, HSTS, X-Frame-Options, CORP, Cache-Control API)
+- [ ] Pas de mot de passe dans `.env.example` ou le code source
+- [ ] `.env.local` dans `.gitignore`
+- [ ] Cles secretes sans prefix `NEXT_PUBLIC_`
+- [ ] `/.well-known/security.txt` accessible
+- [ ] `SECURITY_CONTACT_EMAIL` configure dans les variables d'environnement
 
 ### Contenu
 
@@ -943,7 +1167,7 @@ Avant de livrer le site au client, verifier chaque point :
 
 ---
 
-## 14. Depannage (FAQ)
+## 16. Depannage (FAQ)
 
 ### "Les produits ne s'affichent pas"
 
@@ -978,6 +1202,15 @@ Avant de livrer le site au client, verifier chaque point :
 2. Ajouter l'URL exacte du site (avec `https://`)
 3. Cocher "Allow credentials"
 4. Sauvegarder et recharger la page
+
+### "Je ne peux pas me connecter a l'admin"
+
+1. Verifier que le compte existe dans Supabase > Authentication > Users
+2. Verifier que le role est bien `admin` dans la table `profiles`
+   - SQL Editor : `SELECT role FROM profiles WHERE id = (SELECT id FROM auth.users WHERE email = 'votre@email.com');`
+3. Si le role est `customer`, le promouvoir : `UPDATE profiles SET role = 'admin' WHERE id = ...`
+4. Si la page affiche "Acces refuse" : le compte existe mais n'est pas admin
+5. Si verrouillage (5 tentatives) : rafraichir la page et reessayer
 
 ### "Le site est lent"
 

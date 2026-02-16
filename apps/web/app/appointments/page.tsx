@@ -39,7 +39,7 @@ export default function AppointmentsPage() {
     return (
       <div className="container-page py-20 text-center">
         <div className="mx-auto max-w-lg">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-accent/10">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
             <span className="text-4xl">📅</span>
           </div>
           <h1 className="font-display text-3xl font-bold">
@@ -51,7 +51,7 @@ export default function AppointmentsPage() {
           </p>
           <a
             href="mailto:contact@epicerie-africaine.ca"
-            className="mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 font-medium text-white transition-colors hover:bg-accent-dark"
+            className="mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-medium text-white transition-colors hover:bg-primary-dark"
           >
             Nous contacter
           </a>

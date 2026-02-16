@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
+import { headers } from "next/headers";
 import { Providers } from "@/components/providers";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -52,20 +53,29 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const settings = await getSiteSettings();
+  const headersList = await headers();
+  const pathname = headersList.get("x-next-pathname") ?? "";
+  const isAdmin = pathname.startsWith("/admin-hub");
 
   return (
     <html lang="fr" className={`${inter.variable} ${playfair.variable}`}>
       <body className="flex min-h-screen flex-col font-sans">
         <Providers>
-          {settings.announcementBar?.enabled && (
-            <AnnouncementBar bar={settings.announcementBar} />
+          {!isAdmin && (
+            <>
+              {settings.announcementBar?.enabled && (
+                <AnnouncementBar bar={settings.announcementBar} />
+              )}
+              {settings.shopStatus && !settings.shopStatus.isOpen && (
+                <ShopClosedBanner status={settings.shopStatus} />
+              )}
+              <Header shopName={settings.shopName} logoUrl={settings.logoUrl} />
+            </>
           )}
-          {settings.shopStatus && !settings.shopStatus.isOpen && (
-            <ShopClosedBanner status={settings.shopStatus} />
-          )}
-          <Header shopName={settings.shopName} logoUrl={settings.logoUrl} />
-          <main className="flex-1 pt-16 sm:pt-20">{children}</main>
-          <Footer settings={settings} />
+          <main className={isAdmin ? "" : "flex-1 pt-16 sm:pt-20"}>
+            {children}
+          </main>
+          {!isAdmin && <Footer settings={settings} />}
         </Providers>
       </body>
     </html>

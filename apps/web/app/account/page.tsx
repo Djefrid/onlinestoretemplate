@@ -63,7 +63,7 @@ export default async function AccountPage() {
       {/* Profil */}
       <section className="mt-10">
         <h2 className="mb-4 font-display text-xl font-bold">Profil</h2>
-        <div className="rounded-2xl border border-foreground/5 bg-white p-6">
+        <div className="rounded-2xl border border-foreground/5 bg-card p-6">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <p className="text-xs text-foreground/40">Nom</p>
@@ -96,7 +96,7 @@ export default async function AccountPage() {
         </h2>
 
         {!orders || orders.length === 0 ? (
-          <div className="rounded-2xl border border-foreground/5 bg-white p-8 text-center">
+          <div className="rounded-2xl border border-foreground/5 bg-card p-8 text-center">
             <span className="mb-3 block text-4xl">📦</span>
             <p className="text-foreground/50">Aucune commande pour le moment.</p>
           </div>
@@ -105,7 +105,7 @@ export default async function AccountPage() {
             {orders.map((order) => (
               <div
                 key={order.id}
-                className="rounded-2xl border border-foreground/5 bg-white p-6"
+                className="rounded-2xl border border-foreground/5 bg-card p-6"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
@@ -130,7 +130,7 @@ export default async function AccountPage() {
                     >
                       {statusLabels[order.status] ?? order.status}
                     </span>
-                    <span className="text-sm font-bold text-accent">
+                    <span className="text-sm font-bold text-primary">
                       {formatPrice(order.total_cents / 100)}
                     </span>
                   </div>

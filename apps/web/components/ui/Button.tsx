@@ -7,9 +7,9 @@ type Size = "sm" | "md" | "lg";
 
 const variantStyles: Record<Variant, string> = {
   primary:
-    "bg-accent text-white hover:bg-accent-dark active:bg-accent-dark/90",
+    "bg-primary text-primary-foreground hover:bg-primary-dark active:bg-primary-dark/90",
   outline:
-    "border-2 border-accent text-accent hover:bg-accent hover:text-white",
+    "border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground",
   ghost: "text-foreground hover:bg-foreground/5",
 };
 
@@ -20,7 +20,7 @@ const sizeStyles: Record<Size, string> = {
 };
 
 const baseStyles =
-  "inline-flex items-center justify-center gap-2 rounded-full font-medium transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-full font-medium transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50";
 
 type ButtonAsButton = ButtonHTMLAttributes<HTMLButtonElement> & {
   href?: never;

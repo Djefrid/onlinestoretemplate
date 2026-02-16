@@ -32,9 +32,9 @@ export function Hero({ heroTitle, heroSubtitle, bannerUrl, bannerAlt }: HeroProp
           </>
         ) : (
           <>
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-accent/3" />
-            <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-accent/5 blur-3xl" />
-            <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-accent/3 blur-3xl" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/3" />
+            <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
+            <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-primary/3 blur-3xl" />
           </>
         )}
       </div>
@@ -44,7 +44,7 @@ export function Hero({ heroTitle, heroSubtitle, bannerUrl, bannerAlt }: HeroProp
           {/* Eyebrow */}
           <p
             className={`mb-6 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium ${
-              hasImage ? "bg-white/20 text-white" : "bg-accent/10 text-accent-dark"
+              hasImage ? "bg-white/20 text-white" : "bg-primary/10 text-primary-dark"
             }`}
           >
             <span aria-hidden="true">✦</span>

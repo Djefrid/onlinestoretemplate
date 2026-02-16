@@ -20,7 +20,7 @@ export function CartSummary() {
   const total = subtotal + shipping;
 
   return (
-    <div className="rounded-2xl border border-foreground/5 bg-white p-6">
+    <div className="rounded-2xl border border-foreground/5 bg-card p-6">
       <h2 className="font-display text-lg font-bold">Résumé</h2>
 
       <div className="mt-6 space-y-3 text-sm">
@@ -51,7 +51,7 @@ export function CartSummary() {
         <div className="border-t border-foreground/5 pt-3">
           <div className="flex justify-between text-base font-bold">
             <span>Total</span>
-            <span className="text-accent">{formatPrice(total)}</span>
+            <span className="text-primary">{formatPrice(total)}</span>
           </div>
         </div>
       </div>

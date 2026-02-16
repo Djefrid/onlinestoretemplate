@@ -22,14 +22,17 @@ my-shop/
 ├── apps/
 │   ├── web/               # Next.js 14 (port 3007 en dev)
 │   │   ├── app/           # Pages (App Router)
-│   │   ├── components/    # Composants UI + layout
+│   │   │   ├── admin-hub/ # Panel admin (login + dashboard)
+│   │   │   ├── auth/      # Authentification publique
+│   │   │   └── api/       # Routes API (checkout, webhook)
+│   │   ├── components/    # Composants UI + layout + admin
 │   │   ├── lib/           # Clients (Sanity, Supabase, Stripe), utils
 │   │   ├── hooks/         # Custom hooks
 │   │   ├── types/         # TypeScript types
 │   │   └── styles/        # CSS global
 │   └── studio/            # Sanity Studio v3
 ├── supabase/
-│   └── migrations/        # SQL (tables, RLS, indexes, RPC)
+│   └── migrations/        # SQL (tables, RLS, indexes, RPC, sécurité)
 ├── seed/                  # Script de seed Sanity
 ├── docker-compose.yml
 └── README.md
@@ -60,6 +63,10 @@ cp apps/web/.env.example apps/web/.env.local
 | `NEXT_PUBLIC_SITE_NAME` | Non | Nom du site |
 | `NEXT_PUBLIC_SHIPPING_COST` | Non | Frais de livraison (défaut: `5.99`) |
 | `NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD` | Non | Seuil livraison gratuite (défaut: `75`) |
+| `NEXT_PUBLIC_SANITY_STUDIO_URL` | Non | URL du studio Sanity (admin hub) |
+| `NEXT_PUBLIC_STRIPE_DASHBOARD_URL` | Non | URL du dashboard Stripe (admin hub) |
+| `NEXT_PUBLIC_SUPABASE_DASHBOARD_URL` | Non | URL du dashboard Supabase (admin hub) |
+| `NEXT_PUBLIC_CAL_DASHBOARD_URL` | Non | URL du dashboard Cal.com (admin hub) |
 
 *L'app démarre sans ces variables grâce aux fallbacks mock/graceful degradation.
 
@@ -78,10 +85,14 @@ cp .env.example .env.local
 
 # 4. Appliquer les migrations Supabase
 # Via le dashboard Supabase > SQL Editor, exécuter dans l'ordre :
+#   supabase/migrations/all.sql (script complet)
+#   Ou individuellement :
 #   supabase/migrations/001_init.sql
 #   supabase/migrations/002_rls_policies.sql
 #   supabase/migrations/003_indexes.sql
 #   supabase/migrations/004_loyalty_rpc.sql
+#   supabase/migrations/005_admin_role.sql
+#   supabase/migrations/006_security_fixes.sql
 
 # 5. Lancer le dev server
 npm run dev -- -p 3007
@@ -99,7 +110,7 @@ cd ../../seed && node seed-sanity.mjs
 
 | Table | Description |
 |-------|------------|
-| `profiles` | Profils utilisateur (auto-créé au signup via trigger) |
+| `profiles` | Profils utilisateur (auto-créé au signup via trigger, colonne `role`: admin/customer) |
 | `carts` | Paniers persistants (statut: `active` / `converted`) |
 | `cart_items` | Articles du panier |
 | `orders` | Commandes (créées par le webhook Stripe) |
@@ -109,7 +120,7 @@ cd ../../seed && node seed-sanity.mjs
 ### RLS (Row Level Security)
 
 Toutes les tables ont RLS activé :
-- **profiles** : lecture/modification de son propre profil
+- **profiles** : lecture/modification de son propre profil (le champ `role` ne peut pas être modifié par l'utilisateur)
 - **carts/cart_items** : CRUD sur ses propres paniers
 - **orders/order_items** : lecture de ses propres commandes
 - **reviews** : lecture publique, CRUD sur ses propres avis
@@ -120,11 +131,55 @@ Le webhook utilise `SUPABASE_SERVICE_ROLE_KEY` pour bypasser RLS.
 
 ```
 supabase/migrations/
-├── 001_init.sql           # Tables, enums, trigger handle_new_user
-├── 002_rls_policies.sql   # 14 RLS policies
-├── 003_indexes.sql        # 7 indexes de performance
-└── 004_loyalty_rpc.sql    # Fonction increment_loyalty
+├── 001_init.sql              # Tables, enums, trigger handle_new_user
+├── 002_rls_policies.sql      # 14 RLS policies (role protégé)
+├── 003_indexes.sql           # 7 indexes de performance
+├── 004_loyalty_rpc.sql       # Fonction increment_loyalty
+├── 005_admin_role.sql        # Colonne role (admin/customer)
+├── 006_security_fixes.sql    # Correctifs sécurité (RLS, RPC, search_path)
+├── 007_audit_logs.sql        # Table audit_logs pour traçabilité admin
+└── all.sql                   # Script complet (toutes migrations)
 ```
+
+## Admin Hub
+
+### Accès administrateur
+
+Le panel admin est une zone 100% indépendante du site public :
+- **URL** : `/admin-hub` (dashboard) et `/admin-hub/login` (connexion)
+- **Design** : dark mode dédié, aucun élément du site public (pas de header/footer public)
+- **Sécurité** : rôle `admin` vérifié côté serveur + côté client, pas de création de compte
+- **Header admin** : 3 éléments uniquement — Badge Admin, Voir le site, Déconnexion
+
+### Créer un administrateur
+
+Le rôle admin ne peut être attribué que via SQL (aucune auto-promotion possible).
+
+**Via le dashboard Supabase :**
+
+1. **Authentication > Users > Add user** (email + mot de passe, cocher Auto-confirm)
+2. **SQL Editor > New Query :**
+
+```sql
+UPDATE profiles SET role = 'admin'
+WHERE id = (SELECT id FROM auth.users WHERE email = 'admin@exemple.com');
+```
+
+**Via la ligne de commande (Supabase CLI) :**
+
+```bash
+supabase link --project-ref VOTRE_PROJECT_REF
+supabase db execute --sql "UPDATE profiles SET role = 'admin' WHERE id = (SELECT id FROM auth.users WHERE email = 'admin@exemple.com');"
+```
+
+### Cartes du dashboard admin
+
+| Carte | Service | Description |
+|-------|---------|-------------|
+| Contenu & Produits | Sanity Studio | Gestion catalogue, catégories, textes |
+| Finances & Commandes | Stripe Dashboard | Paiements, remboursements, litiges |
+| Base Clients | Supabase Dashboard | Utilisateurs, commandes, données |
+| Planning RDV | Cal.com | Disponibilités, rendez-vous |
 
 ## Auth Supabase
 
@@ -192,8 +247,10 @@ stripe listen --forward-to localhost:3007/api/webhook/stripe
 | `/legal/privacy` | Static | Politique de confidentialité |
 | `/legal/refunds` | Static | Retours et remboursements |
 | `/legal/imprint` | Static | Mentions légales |
-| `/api/checkout` | API | Crée une session Stripe |
-| `/api/webhook/stripe` | API | Webhook Stripe (commandes) |
+| `/admin-hub` | Dynamic | Dashboard admin (rôle admin requis) |
+| `/admin-hub/login` | Static | Connexion admin (formulaire dédié) |
+| `/api/checkout` | API | Crée une session Stripe (prix vérifiés côté serveur) |
+| `/api/webhook/stripe` | API | Webhook Stripe (signature vérifiée) |
 | `/robots.txt` | SEO | Robots.txt |
 | `/sitemap.xml` | SEO | Sitemap dynamique (pages + produits) |
 
@@ -209,6 +266,54 @@ docker-compose up --build -d
 Le Dockerfile utilise le mode `standalone` de Next.js pour une image optimisée (~150 MB).
 Compatible Coolify : pointer le docker-compose.yml et configurer les variables d'environnement dans l'interface.
 
+## Sécurité
+
+### Headers HTTP
+
+Tous les headers de sécurité sont configurés dans `next.config.mjs` :
+
+| Header | Valeur | Protection |
+|--------|--------|------------|
+| `Content-Security-Policy` | Whitelist Stripe, Sanity, Supabase, Cal.com | XSS, injection de scripts |
+| `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` | Force HTTPS |
+| `X-Frame-Options` | `DENY` | Clickjacking |
+| `X-Content-Type-Options` | `nosniff` | MIME sniffing |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Fuite de données |
+| `Permissions-Policy` | Caméra, micro, géoloc, paiement, USB, capture écran désactivés | Abus de fonctionnalités |
+| `Cross-Origin-Opener-Policy` | `same-origin` | Attaques cross-origin |
+| `Cross-Origin-Resource-Policy` | `same-origin` | Spectre / side-channel |
+| `Cache-Control` (API) | `no-store, max-age=0` sur `/api/*` | Cache poisoning |
+| `X-Powered-By` | Supprimé (`poweredByHeader: false`) | Masque le framework |
+
+### Protections appliquées
+
+| Risque | Protection |
+|--------|------------|
+| **Auto-promotion admin** | RLS `WITH CHECK` empêche la modification du champ `role` |
+| **Points de fidélité illimités** | `increment_loyalty` restreint au service_role uniquement |
+| **Manipulation des prix** | Prix vérifiés côté serveur via Sanity avant envoi à Stripe |
+| **Open redirect** | Toutes les redirections auth validées (doit commencer par `/`, pas `//`) |
+| **Brute force admin** | Verrouillage après 5 tentatives côté client |
+| **Fuite d'erreur webhook** | Message générique retourné, détails en log serveur uniquement |
+| **Cookies non sécurisés** | `SameSite=Lax` + `Secure=true` en production |
+| **SQL injection search_path** | `SET search_path = public` sur toutes les fonctions `SECURITY DEFINER` |
+| **Mot de passe faible** | Minimum 8 caractères (norme NIST) |
+| **CVE-2025-29927** | Header `x-middleware-subrequest` bloqué dans le middleware |
+| **Bots / spam checkout** | Honeypot anti-bot sur la route `/api/checkout` |
+| **Session admin trop longue** | Expiration forcée après 4h, re-authentification obligatoire |
+| **Webhook double traitement** | `maybeSingle()` + vérification erreur DB avant traitement |
+| **Traçabilité admin** | Table `audit_logs` (RLS bloqué, écriture service_role uniquement) |
+| **Service client mal configuré** | Validation obligatoire de `SUPABASE_SERVICE_ROLE_KEY` |
+| **security.txt** | Route `/.well-known/security.txt` (RFC 9116) |
+
+### Règles importantes
+
+- **JAMAIS** préfixer une clé secrète avec `NEXT_PUBLIC_` (elle serait exposée côté client)
+- **JAMAIS** commiter `.env.local` ou `.env` (ils sont dans `.gitignore`)
+- Le webhook Stripe vérifie la signature avec `constructEvent()` sur chaque requête
+- Le `SUPABASE_SERVICE_ROLE_KEY` bypass toutes les RLS — utilisé uniquement dans les routes API serveur
+- Les pages admin sont exclues des moteurs de recherche (`robots: noindex, nofollow`)
+
 ## Design tokens
 
 | Token | Valeur |
@@ -221,6 +326,17 @@ Compatible Coolify : pointer le docker-compose.yml et configurer les variables d
 | Font display | Playfair Display |
 
 ## Checklist de tests
+
+### Admin Hub
+- [ ] `/admin-hub` redirige vers `/admin-hub/login` si non connecté
+- [ ] `/admin-hub/login` : formulaire dark mode, pas de "Créer un compte"
+- [ ] Connexion admin avec email/mot de passe (rôle admin requis)
+- [ ] Connexion refusée si le compte n'est pas admin
+- [ ] Verrouillage après 5 tentatives échouées
+- [ ] Dashboard : 4 cartes (Sanity, Stripe, Supabase, Cal.com)
+- [ ] Header admin : badge Admin, Voir le site, Déconnexion
+- [ ] Déconnexion redirige vers `/admin-hub/login`
+- [ ] Pas de header/footer du site public sur les pages admin
 
 ### Auth Supabase
 - [ ] Inscription avec email + mot de passe
@@ -285,6 +401,15 @@ Compatible Coolify : pointer le docker-compose.yml et configurer les variables d
 ### Responsive
 - [ ] Mobile : menu hamburger, grille 2 colonnes, formulaire adapté
 - [ ] Desktop : navigation, grille 4 colonnes, sidebar checkout
+
+### Sécurité
+- [ ] Headers HTTP : CSP, HSTS, X-Frame-Options présents (vérifier avec securityheaders.com)
+- [ ] `X-Powered-By` absent des réponses
+- [ ] Prix vérifiés côté serveur au checkout (modifier un prix dans le panier ne doit pas fonctionner)
+- [ ] Un utilisateur normal ne peut pas modifier son `role` dans `profiles`
+- [ ] `increment_loyalty` non appelable directement par un utilisateur
+- [ ] Redirections auth : impossible de rediriger vers un site externe
+- [ ] Pages admin non indexées par Google (`robots: noindex`)
 
 ### Docker
 - [ ] `docker-compose up --build` sans erreur

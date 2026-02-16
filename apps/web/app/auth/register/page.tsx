@@ -21,8 +21,8 @@ export default function RegisterPage() {
     setError("");
     setLoading(true);
 
-    if (password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères.");
+    if (password.length < 8) {
+      setError("Le mot de passe doit contenir au moins 8 caractères.");
       setLoading(false);
       return;
     }
@@ -48,7 +48,7 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="container-page section-padding flex justify-center">
+      <div className="container-page flex min-h-[calc(100vh-5rem)] items-center justify-center py-10">
         <div className="w-full max-w-md text-center">
           <span className="mb-4 block text-5xl">📧</span>
           <h1 className="font-display text-2xl font-bold">Vérifiez votre email</h1>
@@ -67,8 +67,8 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="container-page section-padding flex justify-center">
-      <div className="w-full max-w-md">
+    <div className="container-page flex min-h-[calc(100vh-5rem)] items-center justify-center py-10">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-sm">
         <div className="text-center">
           <h1 className="font-display text-3xl font-bold">Créer un compte</h1>
           <p className="mt-2 text-sm text-foreground/60">
@@ -87,7 +87,7 @@ export default function RegisterPage() {
               onChange={(e) => setFullName(e.target.value)}
               required
               autoComplete="name"
-              className="w-full rounded-lg border border-foreground/10 bg-white px-4 py-3 text-sm transition-colors focus:border-accent focus:outline-none"
+              className="w-full rounded-lg border border-foreground/10 bg-card px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none"
               placeholder="Jean Dupont"
             />
           </div>
@@ -102,7 +102,7 @@ export default function RegisterPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              className="w-full rounded-lg border border-foreground/10 bg-white px-4 py-3 text-sm transition-colors focus:border-accent focus:outline-none"
+              className="w-full rounded-lg border border-foreground/10 bg-card px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none"
               placeholder="votre@email.com"
             />
           </div>
@@ -118,7 +118,7 @@ export default function RegisterPage() {
               required
               autoComplete="new-password"
               minLength={6}
-              className="w-full rounded-lg border border-foreground/10 bg-white px-4 py-3 text-sm transition-colors focus:border-accent focus:outline-none"
+              className="w-full rounded-lg border border-foreground/10 bg-card px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none"
               placeholder="Minimum 6 caractères"
             />
           </div>
@@ -138,7 +138,7 @@ export default function RegisterPage() {
           Déjà un compte ?{" "}
           <Link
             href="/auth/login"
-            className="font-medium text-accent hover:text-accent-dark"
+            className="font-medium text-primary hover:text-primary-dark"
           >
             Se connecter
           </Link>

@@ -8,7 +8,7 @@ export function AnnouncementBar({ bar }: AnnouncementBarProps) {
   if (!bar.enabled || !bar.text) return null;
 
   return (
-    <div className="bg-accent text-center text-sm font-medium text-white">
+    <div className="bg-primary text-center text-sm font-medium text-primary-foreground">
       <div className="container-page flex items-center justify-center gap-2 py-2">
         <span>{bar.text}</span>
         {bar.linkLabel && bar.linkUrl && (

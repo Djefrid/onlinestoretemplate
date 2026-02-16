@@ -8,7 +8,7 @@
   }
 
   ::selection {
-    @apply bg-accent/30;
+    @apply bg-primary/30;
   }
 
   /* Smooth scroll */
@@ -18,7 +18,7 @@
 
   /* Focus ring */
   *:focus-visible {
-    @apply outline-2 outline-offset-2 outline-accent;
+    @apply outline-2 outline-offset-2 outline-ring;
   }
 }
 

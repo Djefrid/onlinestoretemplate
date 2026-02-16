@@ -56,7 +56,7 @@ export default function CartPage() {
           <div className="mt-6">
             <Link
               href="/shop"
-              className="inline-flex items-center gap-1 text-sm text-foreground/50 transition-colors hover:text-accent"
+              className="inline-flex items-center gap-1 text-sm text-foreground/50 transition-colors hover:text-primary"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

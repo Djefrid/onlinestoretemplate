@@ -105,7 +105,7 @@ export async function BentoGrid() {
                     </p>
                   )}
                   <span
-                    className={`mt-4 inline-flex items-center gap-1 text-sm font-medium ${hasImage ? "text-white" : "text-accent-dark"}`}
+                    className={`mt-4 inline-flex items-center gap-1 text-sm font-medium ${hasImage ? "text-white" : "text-primary-dark"}`}
                   >
                     Découvrir
                     <svg

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe/server";
 import { checkoutSchema } from "@/lib/validators/checkout";
 import { createClient } from "@/lib/supabase/server";
+import { isSanityConfigured } from "@/lib/sanity/client";
+import { getPricesBySlugs } from "@/lib/sanity/queries";
 
 const SHIPPING_COST = parseFloat(process.env.NEXT_PUBLIC_SHIPPING_COST || "5.99");
 const FREE_SHIPPING_THRESHOLD = parseFloat(
@@ -12,6 +14,14 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3007";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+
+    // SECURITY: Honeypot anti-bot — reject if hidden field is filled
+    if (body.website) {
+      return NextResponse.json(
+        { error: "Requête invalide" },
+        { status: 400 },
+      );
+    }
 
     // Validate with Zod
     const result = checkoutSchema.safeParse(body);
@@ -24,6 +34,48 @@ export async function POST(request: NextRequest) {
     }
 
     const data = result.data;
+
+    // ── Server-side price verification ──────────────────
+    // SECURITY: Never trust client-submitted prices.
+    // Fetch real prices from Sanity CMS and use those instead.
+    let verifiedItems: {
+      name: string;
+      price: number;
+      currency: string;
+      slug: string;
+      productId: string;
+      quantity: number;
+    }[];
+
+    if (isSanityConfigured) {
+      const slugs = data.items.map((item) => item.slug);
+      const realPrices = await getPricesBySlugs(slugs);
+
+      verifiedItems = data.items.map((item) => {
+        const real = realPrices[item.slug];
+        if (!real) {
+          throw new Error(`Produit introuvable: ${item.slug}`);
+        }
+        return {
+          name: real.title,
+          price: real.price,
+          currency: real.currency || "CAD",
+          slug: item.slug,
+          productId: item.productId,
+          quantity: item.quantity,
+        };
+      });
+    } else {
+      // Sanity not configured (dev mode) — use client prices as fallback
+      verifiedItems = data.items.map((item) => ({
+        name: item.name,
+        price: item.price,
+        currency: item.currency || "CAD",
+        slug: item.slug,
+        productId: item.productId,
+        quantity: item.quantity,
+      }));
+    }
 
     // Get current user (optional — guests can checkout too)
     let userId: string | undefined;
@@ -46,8 +98,8 @@ export async function POST(request: NextRequest) {
       // Supabase not configured or auth failed — continue as guest
     }
 
-    // Calculate shipping
-    const subtotal = data.items.reduce(
+    // Calculate shipping with VERIFIED prices
+    const subtotal = verifiedItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0,
     );
@@ -55,10 +107,10 @@ export async function POST(request: NextRequest) {
       data.deliveryMode === "pickup" || subtotal >= FREE_SHIPPING_THRESHOLD;
     const shippingAmount = shippingFree ? 0 : SHIPPING_COST;
 
-    // Build Stripe line items
-    const lineItems = data.items.map((item) => ({
+    // Build Stripe line items with VERIFIED prices
+    const lineItems = verifiedItems.map((item) => ({
       price_data: {
-        currency: item.currency?.toLowerCase() || "cad",
+        currency: item.currency.toLowerCase(),
         product_data: {
           name: item.name,
           metadata: {
@@ -66,7 +118,7 @@ export async function POST(request: NextRequest) {
             slug: item.slug,
           },
         },
-        unit_amount: Math.round(item.price * 100), // Stripe expects cents
+        unit_amount: Math.round(item.price * 100),
       },
       quantity: item.quantity,
     }));
@@ -113,7 +165,7 @@ export async function POST(request: NextRequest) {
             addressCountry: data.address.country,
           }),
         // Store items summary in metadata (Stripe limits to 500 chars per value)
-        itemsSummary: data.items
+        itemsSummary: verifiedItems
           .map((i) => `${i.slug}×${i.quantity}`)
           .join(",")
           .slice(0, 490),

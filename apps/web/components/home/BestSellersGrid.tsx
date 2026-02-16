@@ -10,7 +10,7 @@ interface BestSellersGridProps {
 
 export function BestSellersGrid({ products }: BestSellersGridProps) {
   return (
-    <section className="section-padding bg-white">
+    <section className="section-padding bg-card">
       <div className="container-page">
         {/* Section header */}
         <div className="mb-12 flex items-end justify-between">

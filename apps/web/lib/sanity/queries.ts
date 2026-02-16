@@ -76,8 +76,8 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Product
   }
 
   if (filters.search) {
-    conditions.push("[title, originCountry] match $search");
-    params.search = `${filters.search}*`;
+    conditions.push("(title match $search || originCountry match $search)");
+    params.search = `*${filters.search}*`;
   }
 
   let ordering = "| order(_createdAt desc)";
@@ -118,6 +118,30 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     { slug },
     { next: { revalidate: 60 } },
   );
+}
+
+/* ── Prices by slugs (server-side checkout verification) ── */
+
+export async function getPricesBySlugs(
+  slugs: string[],
+): Promise<Record<string, { price: number; currency: string; title: string }>> {
+  assertConfigured();
+  const products: { slug: string; price: number; currency: string; title: string }[] =
+    await sanityClient.fetch(
+      /* groq */ `*[_type == "product" && slug.current in $slugs] {
+        "slug": slug.current,
+        price,
+        currency,
+        title
+      }`,
+      { slugs },
+      { next: { revalidate: 0 } },
+    );
+  const map: Record<string, { price: number; currency: string; title: string }> = {};
+  for (const p of products) {
+    map[p.slug] = { price: p.price, currency: p.currency, title: p.title };
+  }
+  return map;
 }
 
 /* ── All product slugs (for static generation) ── */

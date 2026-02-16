@@ -81,7 +81,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               priority
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-accent/5 to-accent/10 text-8xl">
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10 text-8xl">
               {product.tags.includes("Pimenté")
                 ? "🌶️"
                 : product.tags.includes("Surgelé")
@@ -118,7 +118,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           )}
 
           {/* Price */}
-          <p className="mt-6 text-3xl font-bold text-accent">
+          <p className="mt-6 text-3xl font-bold text-primary">
             {formatPrice(product.price, product.currency)}
           </p>
 

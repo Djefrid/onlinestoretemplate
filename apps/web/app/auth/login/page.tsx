@@ -9,7 +9,11 @@ import { Button } from "@/components/ui/Button";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/account";
+  const rawRedirect = searchParams.get("redirect");
+  const redirect =
+    rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
+      ? rawRedirect
+      : "/account";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,7 +46,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-sm">
       <div className="text-center">
         <h1 className="font-display text-3xl font-bold">Connexion</h1>
         <p className="mt-2 text-sm text-foreground/60">
@@ -61,7 +65,7 @@ function LoginForm() {
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
-            className="w-full rounded-lg border border-foreground/10 bg-white px-4 py-3 text-sm transition-colors focus:border-accent focus:outline-none"
+            className="w-full rounded-lg border border-foreground/10 bg-card px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none"
             placeholder="votre@email.com"
           />
         </div>
@@ -76,7 +80,7 @@ function LoginForm() {
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete="current-password"
-            className="w-full rounded-lg border border-foreground/10 bg-white px-4 py-3 text-sm transition-colors focus:border-accent focus:outline-none"
+            className="w-full rounded-lg border border-foreground/10 bg-card px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none"
             placeholder="••••••••"
           />
         </div>
@@ -84,7 +88,7 @@ function LoginForm() {
         <div className="text-right">
           <Link
             href="/auth/reset-password"
-            className="text-xs text-foreground/40 hover:text-accent"
+            className="text-xs text-foreground/40 hover:text-primary"
           >
             Mot de passe oublié ?
           </Link>
@@ -105,7 +109,7 @@ function LoginForm() {
         Pas encore de compte ?{" "}
         <Link
           href="/auth/register"
-          className="font-medium text-accent hover:text-accent-dark"
+          className="font-medium text-primary hover:text-primary-dark"
         >
           Créer un compte
         </Link>
@@ -116,7 +120,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="container-page section-padding flex justify-center">
+    <div className="container-page flex min-h-[calc(100vh-5rem)] items-center justify-center py-10">
       <Suspense>
         <LoginForm />
       </Suspense>

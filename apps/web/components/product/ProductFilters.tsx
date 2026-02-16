@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { Category } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +30,7 @@ export function ProductFilters({ categories }: ProductFiltersProps) {
   const currentMaxPrice = searchParams.get("maxPrice") ?? "";
 
   const [search, setSearch] = useState(currentSearch);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const updateParams = useCallback(
     (updates: Record<string, string | string[] | null>) => {
@@ -59,10 +60,21 @@ export function ProductFilters({ categories }: ProductFiltersProps) {
     updateParams({ tag: next.length > 0 ? next : null });
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateParams({ q: search || null });
+  // Debounced search — filtre automatiquement après 300ms de frappe
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      updateParams({ q: value || null });
+    }, 300);
   };
+
+  // Nettoyage du timeout au démontage
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   const clearAll = () => {
     setSearch("");
@@ -81,34 +93,29 @@ export function ProductFilters({ categories }: ProductFiltersProps) {
         <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-foreground/40">
           Recherche
         </h3>
-        <form onSubmit={handleSearchSubmit} className="flex gap-2">
+        <div className="relative">
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Rechercher..."
-            className="w-full rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm placeholder:text-foreground/30 focus:border-accent focus:outline-none"
+            className="w-full rounded-lg border border-foreground/10 bg-card py-2 pl-9 pr-3 text-sm placeholder:text-foreground/30 focus:border-primary focus:outline-none"
           />
-          <button
-            type="submit"
-            className="shrink-0 rounded-lg bg-accent px-3 py-2 text-sm text-white hover:bg-accent-dark"
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+            className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/30"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-              className="h-4 w-4"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-              />
-            </svg>
-          </button>
-        </form>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+            />
+          </svg>
+        </div>
       </div>
 
       {/* Categories */}
@@ -123,7 +130,7 @@ export function ProductFilters({ categories }: ProductFiltersProps) {
               className={cn(
                 "w-full rounded-lg px-3 py-2 text-left text-sm transition-colors",
                 !currentCategory
-                  ? "bg-accent/10 font-medium text-accent-dark"
+                  ? "bg-primary/10 font-medium text-primary-dark"
                   : "text-foreground/60 hover:bg-foreground/5",
               )}
             >
@@ -137,7 +144,7 @@ export function ProductFilters({ categories }: ProductFiltersProps) {
                 className={cn(
                   "w-full rounded-lg px-3 py-2 text-left text-sm transition-colors",
                   currentCategory === cat.slug
-                    ? "bg-accent/10 font-medium text-accent-dark"
+                    ? "bg-primary/10 font-medium text-primary-dark"
                     : "text-foreground/60 hover:bg-foreground/5",
                 )}
               >
@@ -161,7 +168,7 @@ export function ProductFilters({ categories }: ProductFiltersProps) {
               className={cn(
                 "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
                 currentTags.includes(tag)
-                  ? "bg-accent text-white"
+                  ? "bg-primary text-white"
                   : "bg-foreground/5 text-foreground/60 hover:bg-foreground/10",
               )}
             >
@@ -184,7 +191,7 @@ export function ProductFilters({ categories }: ProductFiltersProps) {
             placeholder="Min"
             defaultValue={currentMinPrice}
             onBlur={(e) => updateParams({ minPrice: e.target.value || null })}
-            className="w-full rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm placeholder:text-foreground/30 focus:border-accent focus:outline-none"
+            className="w-full rounded-lg border border-foreground/10 bg-card px-3 py-2 text-sm placeholder:text-foreground/30 focus:border-primary focus:outline-none"
           />
           <span className="text-foreground/30">–</span>
           <input
@@ -194,7 +201,7 @@ export function ProductFilters({ categories }: ProductFiltersProps) {
             placeholder="Max"
             defaultValue={currentMaxPrice}
             onBlur={(e) => updateParams({ maxPrice: e.target.value || null })}
-            className="w-full rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm placeholder:text-foreground/30 focus:border-accent focus:outline-none"
+            className="w-full rounded-lg border border-foreground/10 bg-card px-3 py-2 text-sm placeholder:text-foreground/30 focus:border-primary focus:outline-none"
           />
         </div>
       </div>
@@ -207,7 +214,7 @@ export function ProductFilters({ categories }: ProductFiltersProps) {
         <select
           value={currentSort}
           onChange={(e) => updateParams({ sort: e.target.value || null })}
-          className="w-full rounded-lg border border-foreground/10 bg-white px-3 py-2 text-sm text-foreground/70 focus:border-accent focus:outline-none"
+          className="w-full rounded-lg border border-foreground/10 bg-card px-3 py-2 text-sm text-foreground/70 focus:border-primary focus:outline-none"
         >
           {SORT_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -221,7 +228,7 @@ export function ProductFilters({ categories }: ProductFiltersProps) {
       {hasFilters && (
         <button
           onClick={clearAll}
-          className="text-sm text-accent underline underline-offset-2 hover:text-accent-dark"
+          className="text-sm text-primary underline underline-offset-2 hover:text-primary-dark"
         >
           Réinitialiser les filtres
         </button>

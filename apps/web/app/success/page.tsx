@@ -76,7 +76,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
         </p>
 
         {/* Delivery info */}
-        <div className="mt-6 rounded-xl border border-foreground/10 bg-white p-4 text-sm">
+        <div className="mt-6 rounded-xl border border-foreground/10 bg-card p-4 text-sm">
           {deliveryMode === "pickup" ? (
             <div className="flex items-center gap-3">
               <span className="text-2xl">🏪</span>
@@ -108,7 +108,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
 
         {/* Order summary */}
         {lineItems && lineItems.data.length > 0 && (
-          <div className="mt-4 rounded-xl border border-foreground/10 bg-white p-4">
+          <div className="mt-4 rounded-xl border border-foreground/10 bg-card p-4">
             <h2 className="mb-3 text-left text-sm font-bold">
               Récapitulatif
             </h2>
@@ -131,7 +131,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
               <div className="mt-3 border-t border-foreground/5 pt-3">
                 <div className="flex justify-between font-bold">
                   <span>Total</span>
-                  <span className="text-accent">
+                  <span className="text-primary">
                     {formatPrice(session.amount_total / 100)}
                   </span>
                 </div>
@@ -142,7 +142,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
 
         {/* If no session data, show generic message */}
         {!session && (
-          <div className="mt-6 rounded-xl border border-foreground/10 bg-white p-4 text-sm text-foreground/60">
+          <div className="mt-6 rounded-xl border border-foreground/10 bg-card p-4 text-sm text-foreground/60">
             Un email de confirmation vous sera envoyé sous peu.
           </div>
         )}
@@ -151,7 +151,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Link
             href="/shop"
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 font-medium text-white transition-colors hover:bg-accent-dark"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-medium text-white transition-colors hover:bg-primary-dark"
           >
             Continuer mes achats
           </Link>

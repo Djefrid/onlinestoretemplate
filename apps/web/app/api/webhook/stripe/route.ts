@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("[webhook] Signature verification failed:", message);
     return NextResponse.json(
-      { error: `Webhook signature verification failed: ${message}` },
+      { error: "Invalid webhook" },
       { status: 400 },
     );
   }
@@ -51,11 +51,17 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   // ── 2. Idempotence — check if order already exists ──
-  const { data: existingOrder } = await supabase
+  const { data: existingOrder, error: lookupError } = await supabase
     .from("orders")
     .select("id")
     .eq("stripe_session_id", session.id)
-    .single();
+    .maybeSingle();
+
+  // If DB lookup failed, abort to avoid duplicate — Stripe will retry
+  if (lookupError) {
+    console.error("[webhook] DB lookup failed, aborting to avoid duplicate:", lookupError);
+    return;
+  }
 
   if (existingOrder) {
     console.log("[webhook] Order already exists, skipping:", existingOrder.id);

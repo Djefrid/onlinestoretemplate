@@ -188,3 +188,83 @@ BEGIN
   WHERE id = user_id_input;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+-- ═══════════════════════════════════════════════
+-- 5/5 — Rôle admin
+-- ═══════════════════════════════════════════════
+
+ALTER TABLE profiles
+  ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'customer';
+
+ALTER TABLE profiles
+  ADD CONSTRAINT profiles_role_check CHECK (role IN ('admin', 'customer'));
+
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles (role);
+
+
+-- ═══════════════════════════════════════════════
+-- 6/6 — Correctifs de sécurité
+-- ═══════════════════════════════════════════════
+
+-- FIX: Empêcher les utilisateurs de modifier leur propre rôle
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
+CREATE POLICY "Users can update own profile"
+  ON profiles FOR UPDATE
+  USING (auth.uid() = id)
+  WITH CHECK (
+    auth.uid() = id
+    AND role = (SELECT role FROM profiles WHERE id = auth.uid())
+  );
+
+-- FIX: Révoquer l'accès public à increment_loyalty
+REVOKE EXECUTE ON FUNCTION increment_loyalty FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION increment_loyalty FROM authenticated;
+REVOKE EXECUTE ON FUNCTION increment_loyalty FROM anon;
+
+-- FIX: search_path sur fonctions SECURITY DEFINER
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name)
+  VALUES (NEW.id, NEW.raw_user_meta_data ->> 'full_name');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+CREATE OR REPLACE FUNCTION increment_loyalty(user_id_input UUID, points_input INT)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE public.profiles
+  SET loyalty_points = loyalty_points + points_input
+  WHERE id = user_id_input;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+
+-- ═══════════════════════════════════════════════════
+-- 7/7 — Table audit_logs pour traçabilité admin
+-- ═══════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS public.audit_logs (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  actor_id    UUID REFERENCES auth.users(id),
+  actor_email TEXT NOT NULL,
+  action      TEXT NOT NULL,
+  resource    TEXT,
+  ip_address  INET,
+  user_agent  TEXT,
+  metadata    JSONB,
+  created_at  TIMESTAMPTZ DEFAULT now()
+);
+
+-- Seul le service_role peut écrire — personne ne lit via API publique
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "No public access to audit logs"
+  ON public.audit_logs
+  USING (false);
+
+CREATE INDEX idx_audit_logs_actor ON audit_logs(actor_id);
+CREATE INDEX idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX idx_audit_logs_created ON audit_logs(created_at DESC);

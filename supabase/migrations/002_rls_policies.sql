@@ -13,7 +13,9 @@ ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own profile"
   ON profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can update own profile"
-  ON profiles FOR UPDATE USING (auth.uid() = id);
+  ON profiles FOR UPDATE
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id AND role = (SELECT role FROM profiles WHERE id = auth.uid()));
 
 -- ── carts ─────────────────────────────────────────
 CREATE POLICY "Users can view own carts"

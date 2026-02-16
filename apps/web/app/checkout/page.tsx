@@ -199,7 +199,7 @@ export default function CheckoutPage() {
                   className={cn(
                     "flex-1 rounded-xl border-2 px-4 py-3 text-sm font-medium transition-colors",
                     deliveryMode === mode
-                      ? "border-accent bg-accent/5 text-accent-dark"
+                      ? "border-primary bg-primary/5 text-primary-dark"
                       : "border-foreground/10 text-foreground/50 hover:border-foreground/20",
                   )}
                 >
@@ -285,7 +285,7 @@ export default function CheckoutPage() {
                   <select
                     value={form.province}
                     onChange={(e) => updateField("province", e.target.value)}
-                    className="w-full rounded-lg border border-foreground/10 bg-white px-3 py-2.5 text-sm focus:border-accent focus:outline-none"
+                    className="w-full rounded-lg border border-foreground/10 bg-card px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
                   >
                     <option value="QC">Québec</option>
                     <option value="ON">Ontario</option>
@@ -324,7 +324,7 @@ export default function CheckoutPage() {
                     className={cn(
                       "rounded-lg border px-3 py-2 text-sm transition-colors",
                       form.pickupSlot === slot
-                        ? "border-accent bg-accent/10 font-medium text-accent-dark"
+                        ? "border-primary bg-primary/10 font-medium text-primary-dark"
                         : "border-foreground/10 text-foreground/60 hover:border-foreground/20",
                     )}
                   >
@@ -341,7 +341,7 @@ export default function CheckoutPage() {
 
         {/* Right: Order summary */}
         <div className="w-full shrink-0 lg:w-80">
-          <div className="sticky top-24 rounded-2xl border border-foreground/5 bg-white p-6">
+          <div className="sticky top-24 rounded-2xl border border-foreground/5 bg-card p-6">
             <h2 className="font-display text-lg font-bold">Votre commande</h2>
 
             {/* Items */}
@@ -380,7 +380,7 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between border-t border-foreground/5 pt-2 text-base font-bold">
                 <span>Total</span>
-                <span className="text-accent">{formatPrice(total)}</span>
+                <span className="text-primary">{formatPrice(total)}</span>
               </div>
             </div>
 
@@ -469,10 +469,10 @@ function InputField({
         onChange={(e) => onChange(e.target.value)}
         autoComplete={autoComplete}
         className={cn(
-          "w-full rounded-lg border bg-white px-3 py-2.5 text-sm transition-colors focus:outline-none",
+          "w-full rounded-lg border bg-card px-3 py-2.5 text-sm transition-colors focus:outline-none",
           error
             ? "border-red-300 focus:border-red-500"
-            : "border-foreground/10 focus:border-accent",
+            : "border-foreground/10 focus:border-primary",
         )}
       />
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
