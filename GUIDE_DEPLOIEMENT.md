@@ -317,8 +317,8 @@ Sans Supabase, l'app fonctionne en **mode invite** (panier localStorage, pas de 
 │ https://abcdefghijk.supabase.co              [Copy]      │
 │                                                          │
 │ Project API keys                                         │
-│ anon public    eyJhbGciOiJIUzI1NiIs...       [Copy]      │
-│ service_role   eyJhbGciOiJIUzI1NiIs...       [Copy]      │
+│ anon public    <votre_cle_jwt>       [Copy]      │
+│ service_role   <votre_cle_jwt>       [Copy]      │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -331,8 +331,8 @@ Sans Supabase, l'app fonctionne en **mode invite** (panier localStorage, pas de 
 ```env
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://abcdefghijk.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIs...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIs...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<votre_cle_jwt>
+SUPABASE_SERVICE_ROLE_KEY=<votre_cle_jwt>
 ```
 
 > **SECURITE CRITIQUE** : La cle `service_role` bypass TOUTES les regles de securite (RLS).
@@ -427,8 +427,8 @@ Sans Stripe, le bouton "Payer" ne fonctionnera pas.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│ Publishable key    pk_test_51abc...           [Copy]      │
-│ Secret key         sk_test_51abc...    [Reveal] [Copy]    │
+│ Publishable key    pk_test_XXXX...             [Copy]      │
+│ Secret key         sk_test_XXXX...      [Reveal] [Copy]   │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -439,9 +439,9 @@ Sans Stripe, le bouton "Payer" ne fonctionnera pas.
 **Fichier `apps/web/.env.local`** :
 
 ```env
-STRIPE_SECRET_KEY=sk_test_51abc...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51abc...
-STRIPE_WEBHOOK_SECRET=whsec_...  # Rempli a l'etape suivante
+STRIPE_SECRET_KEY=<votre_cle_secrete_test>
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=<votre_cle_publique_test>
+STRIPE_WEBHOOK_SECRET=<votre_webhook_secret>  # Rempli a l'etape suivante
 ```
 
 > **SECURITE** : La cle secrete (`sk_test_...` ou `sk_live_...`) ne doit JAMAIS etre dans une variable `NEXT_PUBLIC_`.
@@ -487,7 +487,7 @@ stripe listen --forward-to localhost:3007/api/webhook/stripe
 La commande affiche :
 
 ```
-Ready! Your webhook signing secret is whsec_abc123def456...
+Ready! Your webhook signing secret is <votre_webhook_secret>
 ```
 
 #### D. Copier le secret webhook
@@ -495,7 +495,7 @@ Ready! Your webhook signing secret is whsec_abc123def456...
 Copier le `whsec_...` et le coller dans `apps/web/.env.local` :
 
 ```env
-STRIPE_WEBHOOK_SECRET=whsec_abc123def456...
+STRIPE_WEBHOOK_SECRET=<votre_webhook_secret>
 ```
 
 > **NOTE** : Ce secret change a chaque fois que vous relancez `stripe listen`.
@@ -959,14 +959,14 @@ NEXT_PUBLIC_SANITY_API_VERSION=2024-01-01
 SANITY_API_TOKEN=votre_token
 
 # Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
+NEXT_PUBLIC_SUPABASE_URL=<votre_url_supabase>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<votre_anon_key>
+SUPABASE_SERVICE_ROLE_KEY=<votre_service_role_key>
 
 # Stripe (MODE LIVE !)
-STRIPE_SECRET_KEY=sk_live_...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
-STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_SECRET_KEY=<votre_cle_secrete_stripe>
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=<votre_cle_publique_stripe>
+STRIPE_WEBHOOK_SECRET=<votre_webhook_secret_stripe>
 
 # Cal.com
 NEXT_PUBLIC_CALCOM_EMBED_URL=username/event

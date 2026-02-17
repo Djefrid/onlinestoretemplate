@@ -33,10 +33,10 @@ export function Footer({ settings }: FooterProps) {
   return (
     <footer className="bg-[#1A1A1A] text-white/80">
       <div className="container-page py-10">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-8 text-center sm:grid-cols-2 sm:text-left lg:grid-cols-5">
           {/* Brand + Contact */}
           <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/" className="inline-flex items-center gap-2">
               <span className="text-2xl" aria-hidden="true">
                 🌍
               </span>
@@ -44,7 +44,7 @@ export function Footer({ settings }: FooterProps) {
                 {settings.shopName}
               </span>
             </Link>
-            <p className="mt-3 text-sm leading-relaxed text-white/50">
+            <p className="mt-3 text-sm leading-relaxed text-white/50 text-justify">
               {settings.tagline ||
                 "L\u2019Afrique authentique, livrée à votre porte. Épices, produits frais et soins naturels importés directement du continent."}
             </p>
@@ -125,7 +125,7 @@ export function Footer({ settings }: FooterProps) {
 
             {/* Social links */}
             {hasSocials && (
-              <div className="mt-3 flex gap-3">
+              <div className="mt-3 flex justify-center gap-3 sm:justify-start">
                 {settings.socials!.instagram && (
                   <a
                     href={settings.socials!.instagram}

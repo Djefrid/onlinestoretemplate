@@ -578,8 +578,8 @@ Configurer un SMTP custom dans **Supabase Dashboard > Authentication > SMTP Sett
 
 | Phase | Provider | Config |
 |---|---|---|
-| **Lancement** | Resend | Host: `smtp.resend.com`, Port: `465`, User: `resend`, Pass: `re_xxx` |
-| **Croissance** | AWS SES | Host: `email-smtp.ca-central-1.amazonaws.com`, Port: `587`, User: `AKIA...`, Pass: `xxx` |
+| **Lancement** | Resend | Host: `smtp.resend.com`, Port: `465`, User: `resend`, Pass: `<votre_cle_resend>` |
+| **Croissance** | AWS SES | Host: `email-smtp.ca-central-1.amazonaws.com`, Port: `587`, User: `<votre_user_ses>`, Pass: `<votre_pass_ses>` |
 
 ### Switch :
 Changer 4 champs dans le dashboard Supabase. Zero code a modifier. Instantane.
@@ -954,7 +954,7 @@ dig TXT _dmarc.epicerie-africaine.ca
     → Developers > Webhooks > Votre endpoint
     → Ecouter : checkout.session.completed, payment_intent.payment_failed
 [ ] Activer le mode Live (pas Test) pour la production :
-    → Utiliser les cles pk_live_xxx et sk_live_xxx
+    → Utiliser les cles Live (pas Test) depuis le dashboard Stripe
 [ ] Configurer l'email de reception Stripe pour les litiges/disputes
 ```
 
