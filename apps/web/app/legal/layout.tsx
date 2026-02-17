@@ -5,7 +5,7 @@ export default function LegalLayout({
 }) {
   return (
     <div className="container-page py-16">
-      <article className="prose prose-neutral mx-auto max-w-3xl prose-headings:font-display prose-h1:text-3xl prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
+      <article className="prose prose-neutral mx-auto max-w-3xl prose-headings:font-display prose-h1:text-3xl prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-p:text-justify">
         {children}
       </article>
     </div>
