@@ -210,7 +210,7 @@ Sans Sanity configure, l'application affiche des produits de demonstration (mock
 4. Ajouter ces origines :
    - `http://localhost:3007` (developpement)
    - `http://localhost:3333` (studio local)
-   - `https://votre-domaine.com` (production — a ajouter plus tard)
+   - `https://storetemplate.djefrid.ca` (production — a ajouter plus tard)
 5. Pour chaque origine, cocher **"Allow credentials"**
 
 ### Etape 4.4 — Creer un token API
@@ -375,10 +375,10 @@ Aller dans **Table Editor** (sidebar) et confirmer la presence de :
 
 1. Aller dans **Authentication** (icone cadenas) > **URL Configuration**
 2. Configurer :
-   - **Site URL** : `http://localhost:3007` (dev) ou `https://votre-domaine.com` (prod)
+   - **Site URL** : `http://localhost:3007` (dev) ou `https://storetemplate.djefrid.ca` (prod)
    - **Redirect URLs** : Cliquer "Add URL" et ajouter :
      - `http://localhost:3007/auth/callback`
-     - `https://votre-domaine.com/auth/callback` (ajouter pour la prod)
+     - `https://storetemplate.djefrid.ca/auth/callback` (ajouter pour la prod)
 
 ### Etape 5.8 — (Dev uniquement) Desactiver la confirmation email
 
@@ -518,7 +518,7 @@ Quand le site est deploye en production :
 1. Aller dans **Developers > Webhooks** dans le dashboard Stripe
 2. Cliquer **"Add endpoint"**
 3. Remplir :
-   - **Endpoint URL** : `https://votre-domaine.com/api/webhook/stripe`
+   - **Endpoint URL** : `https://storetemplate.djefrid.ca/api/webhook/stripe`
    - **Events to send** : Selectionner `checkout.session.completed`
 4. Cliquer **"Add endpoint"**
 5. Copier le **"Signing secret"** affiche
@@ -973,7 +973,7 @@ STRIPE_WEBHOOK_SECRET=<votre_webhook_secret_stripe>
 NEXT_PUBLIC_CALCOM_EMBED_URL=username/event
 
 # App
-NEXT_PUBLIC_BASE_URL=https://votre-domaine.com
+NEXT_PUBLIC_BASE_URL=https://storetemplate.djefrid.ca
 NEXT_PUBLIC_SITE_NAME=Epicerie Africaine
 
 # Shipping
@@ -988,12 +988,12 @@ NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD=75
 
 1. Cliquer **"Deploy"**
 2. Attendre la fin du build (~2-3 minutes)
-3. Vercel fournit une URL (ex: `epicerie-africaine.vercel.app`)
+3. Vercel fournit une URL (ex: `storetemplate.djefrid.ca`)
 
 #### Etape 12.5 — Configurer le domaine personnalise
 
 1. Dans Vercel, aller dans **Settings > Domains**
-2. Ajouter le domaine du client (ex: `epicerie-africaine.ca`)
+2. Ajouter le domaine du client (ex: `storetemplate.djefrid.ca`)
 3. Suivre les instructions pour configurer les DNS :
    - **Type A** : `76.76.21.21`
    - **Type CNAME** (www) : `cname.vercel-dns.com`
@@ -1004,11 +1004,11 @@ NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD=75
 
 Apres le deploiement, mettre a jour :
 
-1. **`NEXT_PUBLIC_BASE_URL`** dans Vercel : `https://votre-domaine.com`
+1. **`NEXT_PUBLIC_BASE_URL`** dans Vercel : `https://storetemplate.djefrid.ca`
 2. **Supabase** > Authentication > URL Configuration :
-   - Site URL : `https://votre-domaine.com`
-   - Redirect URLs : ajouter `https://votre-domaine.com/auth/callback`
-3. **Sanity** > API > CORS Origins : ajouter `https://votre-domaine.com`
+   - Site URL : `https://storetemplate.djefrid.ca`
+   - Redirect URLs : ajouter `https://storetemplate.djefrid.ca/auth/callback`
+3. **Sanity** > API > CORS Origins : ajouter `https://storetemplate.djefrid.ca`
 4. **Stripe** > Webhooks : creer l'endpoint de production (voir section 6.7)
 5. **Supabase** > Reactiver la confirmation email si desactivee
 
@@ -1112,7 +1112,7 @@ Un GitHub Action (`.github/workflows/keep-alive.yml`) envoie un ping toutes les 
 |--------|--------|
 | `NEXT_PUBLIC_SUPABASE_URL` | URL du projet Supabase (ex: `https://abcdef.supabase.co`) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Cle anonyme Supabase |
-| `SITE_URL` | URL de production du site (ex: `https://votre-domaine.com`) |
+| `SITE_URL` | URL de production du site (ex: `https://storetemplate.djefrid.ca`) |
 
 3. Le workflow s'execute automatiquement tous les 3 jours. Verifier dans **Actions** > **Keep Supabase Alive**.
 
