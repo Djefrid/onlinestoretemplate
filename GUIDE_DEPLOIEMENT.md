@@ -369,6 +369,7 @@ Aller dans **Table Editor** (sidebar) et confirmer la presence de :
 | `orders` | Commandes (creees par webhook) | stripe_session_id, status, customer_email, total_cents |
 | `order_items` | Articles dans les commandes | order_id, product_slug, name, price_cents, quantity |
 | `reviews` | Avis clients | user_id, product_slug, rating, comment |
+| `audit_logs` | Tracabilite admin | actor_id, actor_email, action, resource, metadata |
 
 ### Etape 5.7 — Configurer l'authentification
 
@@ -1097,6 +1098,26 @@ Le format d'affichage est gere dans le composant `ProductCard`.
 1. **Supabase** > Authentication > Users : liste des comptes
 2. **Supabase** > Table Editor > `profiles` : details des profils
 
+### GitHub Action — Anti-pause Supabase (free tier)
+
+Le projet Supabase free tier se met en pause automatiquement apres 7 jours d'inactivite.
+Un GitHub Action (`.github/workflows/keep-alive.yml`) envoie un ping toutes les 72h pour empecher cette pause.
+
+#### Configuration des secrets GitHub
+
+1. Aller dans **GitHub > Settings > Secrets and variables > Actions**
+2. Cliquer **"New repository secret"** et ajouter :
+
+| Secret | Valeur |
+|--------|--------|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL du projet Supabase (ex: `https://abcdef.supabase.co`) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Cle anonyme Supabase |
+| `SITE_URL` | URL de production du site (ex: `https://votre-domaine.com`) |
+
+3. Le workflow s'execute automatiquement tous les 3 jours. Verifier dans **Actions** > **Keep Supabase Alive**.
+
+> **NOTE** : Si le projet passe en plan payant, ce workflow n'est plus necessaire.
+
 ---
 
 ## 15. Checklist de livraison
@@ -1157,6 +1178,7 @@ Avant de livrer le site au client, verifier chaque point :
 - [ ] CORS Sanity mis a jour avec le domaine de prod
 - [ ] URLs Supabase mises a jour avec le domaine de prod
 - [ ] `NEXT_PUBLIC_BASE_URL` mis a jour avec le domaine de prod
+- [ ] Secrets GitHub configures pour le workflow keep-alive (section 14)
 
 ### Documentation client
 

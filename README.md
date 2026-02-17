@@ -116,6 +116,7 @@ cd ../../seed && node seed-sanity.mjs
 | `orders` | Commandes (créées par le webhook Stripe) |
 | `order_items` | Articles de commande |
 | `reviews` | Avis produit (1 par user par produit) |
+| `audit_logs` | Traçabilité admin (RLS bloqué, écriture service_role uniquement) |
 
 ### RLS (Row Level Security)
 
@@ -124,6 +125,7 @@ Toutes les tables ont RLS activé :
 - **carts/cart_items** : CRUD sur ses propres paniers
 - **orders/order_items** : lecture de ses propres commandes
 - **reviews** : lecture publique, CRUD sur ses propres avis
+- **audit_logs** : aucun accès public (RLS bloqué), écriture uniquement via service_role
 
 Le webhook utilise `SUPABASE_SERVICE_ROLE_KEY` pour bypasser RLS.
 
@@ -233,6 +235,7 @@ stripe listen --forward-to localhost:3007/api/webhook/stripe
 |-------|------|------------|
 | `/` | Static | Accueil (Hero, Catégories, Best-sellers) |
 | `/shop` | Dynamic | Catalogue avec filtres et recherche |
+| `/products` | Redirect | Redirection permanente (301) vers `/shop` |
 | `/product/[slug]` | Dynamic | Fiche produit détaillée |
 | `/cart` | Static | Panier (Zustand) |
 | `/checkout` | Static | Formulaire commande (pré-rempli si connecté) |
@@ -265,6 +268,32 @@ docker-compose up --build -d
 
 Le Dockerfile utilise le mode `standalone` de Next.js pour une image optimisée (~150 MB).
 Compatible Coolify : pointer le docker-compose.yml et configurer les variables d'environnement dans l'interface.
+
+## GitHub Action — Anti-pause Supabase
+
+Le fichier `.github/workflows/keep-alive.yml` contient un cron job qui s'exécute toutes les 72h pour empêcher la pause automatique du projet Supabase (free tier).
+
+**Secrets GitHub requis :**
+
+| Secret | Description |
+|--------|------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL du projet Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clé anonyme Supabase |
+| `SITE_URL` | URL de production du site |
+
+Configurer dans **GitHub > Settings > Secrets and variables > Actions > New repository secret**.
+
+## Favicons
+
+Les favicons sont dans `apps/web/app/` :
+
+| Fichier | Taille | Usage |
+|---------|--------|-------|
+| `favicon.ico` | 48×48 | Favicon navigateur (ICO multi-taille) |
+| `icon.png` | 512×512 | PWA, Android, raccourcis |
+| `apple-icon.png` | 180×180 | Apple Touch Icon (iOS) |
+
+Next.js App Router détecte automatiquement ces fichiers et génère les balises `<link>` appropriées.
 
 ## Sécurité
 
@@ -313,6 +342,8 @@ Tous les headers de sécurité sont configurés dans `next.config.mjs` :
 - Le webhook Stripe vérifie la signature avec `constructEvent()` sur chaque requête
 - Le `SUPABASE_SERVICE_ROLE_KEY` bypass toutes les RLS — utilisé uniquement dans les routes API serveur
 - Les pages admin sont exclues des moteurs de recherche (`robots: noindex, nofollow`)
+
+Pour une checklist détaillée de sécurité, voir **[SECURITY_CHECKLIST.md](SECURITY_CHECKLIST.md)**.
 
 ## Design tokens
 
