@@ -10,6 +10,15 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/products",
+        destination: "/shop",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

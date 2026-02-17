@@ -1,11 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="96" fill="#1A1A1A"/>
   <g transform="translate(256,256)">
-    <!-- Lettre H stylisée pour "Hawa exotiques" -->
-    <rect x="-120" y="-130" width="36" height="260" rx="8" fill="#CCA43B"/>
-    <rect x="84" y="-130" width="36" height="260" rx="8" fill="#CCA43B"/>
-    <rect x="-84" y="-18" width="168" height="36" rx="8" fill="#CCA43B"/>
+    <!-- Lettre E stylisée pour "Épicerie Africaine" -->
+    <rect x="-100" y="-130" width="36" height="260" rx="8" fill="#CCA43B"/>
+    <rect x="-64" y="-130" width="164" height="36" rx="8" fill="#CCA43B"/>
+    <rect x="-64" y="-18" width="130" height="36" rx="8" fill="#CCA43B"/>
+    <rect x="-64" y="94" width="164" height="36" rx="8" fill="#CCA43B"/>
     <!-- Accent africain — petit losange décoratif -->
-    <rect x="-12" y="-170" width="24" height="24" rx="2" fill="#CCA43B" transform="rotate(45)"/>
+    <rect x="108" y="-160" width="20" height="20" rx="2" fill="#CCA43B" transform="rotate(45,118,-150)"/>
   </g>
 </svg>
