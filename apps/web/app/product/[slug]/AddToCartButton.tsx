@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { motion } from "framer-motion";
+import { ShoppingBag, Check } from "lucide-react";
 import { useCartStore } from "@/lib/cart/store";
+import { useCartUiStore } from "@/lib/cart/uiStore";
 import type { Product } from "@/types";
 
 interface AddToCartButtonProps {
@@ -11,11 +13,13 @@ interface AddToCartButtonProps {
 
 export function AddToCartButton({ product }: AddToCartButtonProps) {
   const addItem = useCartStore((s) => s.addItem);
+  const openCart = useCartUiStore((s) => s.openCart);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
 
   const handleAdd = () => {
     addItem(product, quantity);
+    openCart();
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
@@ -23,21 +27,21 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
   const disabled = product.stock <= 0;
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-3">
       {/* Quantity selector */}
-      <div className="flex items-center rounded-full border border-foreground/10">
+      <div className="flex items-center rounded-full border border-foreground/10 bg-foreground/[0.03]">
         <button
           onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-          className="flex h-10 w-10 items-center justify-center text-foreground/60 hover:text-foreground disabled:opacity-30"
+          className="flex h-11 w-11 items-center justify-center text-lg text-foreground/50 transition-colors hover:text-foreground disabled:opacity-25"
           disabled={quantity <= 1}
           aria-label="Diminuer la quantité"
         >
           −
         </button>
-        <span className="w-8 text-center text-sm font-medium">{quantity}</span>
+        <span className="w-8 text-center text-sm font-semibold tabular-nums">{quantity}</span>
         <button
           onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
-          className="flex h-10 w-10 items-center justify-center text-foreground/60 hover:text-foreground disabled:opacity-30"
+          className="flex h-11 w-11 items-center justify-center text-lg text-foreground/50 transition-colors hover:text-foreground disabled:opacity-25"
           disabled={quantity >= product.stock}
           aria-label="Augmenter la quantité"
         >
@@ -45,48 +49,36 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
         </button>
       </div>
 
-      {/* Add to cart */}
-      <Button onClick={handleAdd} disabled={disabled} size="lg" className="flex-1">
+      {/* CTA */}
+      <motion.button
+        onClick={handleAdd}
+        disabled={disabled}
+        whileTap={!disabled ? { scale: 0.97 } : undefined}
+        whileHover={!disabled ? { scale: 1.02 } : undefined}
+        transition={{ type: "spring", stiffness: 400, damping: 20 }}
+        className={[
+          "flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white shadow-md transition-colors duration-300",
+          added
+            ? "bg-green-600 shadow-green-500/20"
+            : disabled
+              ? "cursor-not-allowed bg-foreground/20 shadow-none"
+              : "bg-primary shadow-primary/25",
+        ].join(" ")}
+      >
         {added ? (
           <>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-              className="h-5 w-5"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="m4.5 12.75 6 6 9-13.5"
-              />
-            </svg>
+            <Check className="h-4 w-4" />
             Ajouté !
           </>
         ) : disabled ? (
           "Rupture de stock"
         ) : (
           <>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-              className="h-5 w-5"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
-              />
-            </svg>
+            <ShoppingBag className="h-4 w-4" />
             Ajouter au panier
           </>
         )}
-      </Button>
+      </motion.button>
     </div>
   );
 }

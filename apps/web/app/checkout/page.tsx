@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useCartStore } from "@/lib/cart/store";
 import { createClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/utils";
@@ -96,7 +97,7 @@ export default function CheckoutPage() {
           Ajoutez des produits avant de passer commande.
         </p>
         <div className="mt-8">
-          <Button href="/shop" size="lg">Voir la boutique</Button>
+          <Button asChild size="lg"><Link href="/shop">Voir la boutique</Link></Button>
         </div>
       </div>
     );
@@ -440,7 +441,6 @@ export default function CheckoutPage() {
 
 /* ── Reusable input field ─────────────── */
 
-/*test*/
 function InputField({
   label,
   value,

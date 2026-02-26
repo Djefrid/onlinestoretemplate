@@ -175,7 +175,8 @@ export function filterMockProducts(
     );
   }
 
-  if (filters.sort === "price-asc") results.sort((a, b) => a.price - b.price);
+  if (filters.sort === "bestsellers") results.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
+  else if (filters.sort === "price-asc") results.sort((a, b) => a.price - b.price);
   else if (filters.sort === "price-desc") results.sort((a, b) => b.price - a.price);
   else if (filters.sort === "name") results.sort((a, b) => a.title.localeCompare(b.title));
 

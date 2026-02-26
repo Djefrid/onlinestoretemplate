@@ -7,6 +7,8 @@ import { Footer } from "@/components/layout/Footer";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { ShopClosedBanner } from "@/components/layout/ShopClosedBanner";
 import { getSiteSettings } from "@/lib/sanity/siteSettings";
+import { getCategories } from "@/lib/sanity/queries";
+import { CartDrawer } from "@/components/cart/CartDrawer";
 import "@/styles/globals.css";
 
 const inter = Inter({
@@ -52,13 +54,22 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const settings = await getSiteSettings();
-  const headersList = await headers();
+  const [settings, categories] = await Promise.all([
+    getSiteSettings(),
+    getCategories().catch(() => []),
+  ]);
+  const headersList = headers();
   const pathname = headersList.get("x-next-pathname") ?? "";
   const isAdmin = pathname.startsWith("/admin-hub");
 
   return (
     <html lang="fr" className={`${inter.variable} ${playfair.variable}`}>
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
+        />
+      </head>
       <body className="flex min-h-screen flex-col font-sans">
         <Providers>
           {!isAdmin && (
@@ -69,13 +80,18 @@ export default async function RootLayout({
               {settings.shopStatus && !settings.shopStatus.isOpen && (
                 <ShopClosedBanner status={settings.shopStatus} />
               )}
-              <Header shopName={settings.shopName} logoUrl={settings.logoUrl} />
+              <Header
+                shopName={settings.shopName}
+                logoUrl={settings.logoUrl}
+                categories={categories}
+              />
+              <CartDrawer />
             </>
           )}
-          <main className={isAdmin ? "" : "flex-1 pt-16 sm:pt-20"}>
+          <main className={isAdmin ? "" : "flex-1 pt-24"}>
             {children}
           </main>
-          {!isAdmin && <Footer settings={settings} />}
+          {!isAdmin && <Footer settings={settings} categories={categories} />}
         </Providers>
       </body>
     </html>

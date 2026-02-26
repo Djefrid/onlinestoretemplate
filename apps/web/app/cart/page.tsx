@@ -23,8 +23,8 @@ export default function CartPage() {
           Découvrez nos produits et ajoutez-les à votre panier.
         </p>
         <div className="mt-8">
-          <Button href="/shop" size="lg">
-            Voir la boutique
+          <Button asChild size="lg">
+            <Link href="/shop">Voir la boutique</Link>
           </Button>
         </div>
       </div>
@@ -37,7 +37,11 @@ export default function CartPage() {
       <div className="mb-10 flex items-end justify-between">
         <h1 className="font-display text-3xl font-bold sm:text-4xl">Panier</h1>
         <button
-          onClick={clearCart}
+          onClick={() => {
+            if (window.confirm("Vider le panier ? Cette action est irréversible.")) {
+              clearCart();
+            }
+          }}
           className="text-sm text-foreground/40 underline underline-offset-2 hover:text-red-500"
         >
           Vider le panier

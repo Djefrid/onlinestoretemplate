@@ -12,6 +12,7 @@ interface ProductFiltersProps {
 const TAG_OPTIONS = ["Bio", "Pimenté", "Surgelé"] as const;
 const SORT_OPTIONS = [
   { value: "", label: "Nouveauté" },
+  { value: "bestsellers", label: "Meilleures ventes" },
   { value: "price-asc", label: "Prix croissant" },
   { value: "price-desc", label: "Prix décroissant" },
   { value: "name", label: "Nom A-Z" },

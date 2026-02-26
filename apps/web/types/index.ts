@@ -74,7 +74,8 @@ export interface Product {
   price: number;
   currency: string;
   images: ProductImage[];
-  description?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  description?: any; // Portable Text blocks
   category?: Category;
   tags: Tag[];
   originCountry: string;
@@ -83,6 +84,12 @@ export interface Product {
   isOrganic: boolean;
   stock: number;
   isFeatured: boolean;
+  isBestSeller?: boolean;
+  ratingAverage?: number;
+  reviewsCount?: number;
+  badge?: string;
+  preparationTips?: string;
+  producerNote?: string;
   relatedProducts?: Product[];
 }
 
@@ -156,6 +163,7 @@ export interface Profile {
   full_name?: string;
   phone?: string;
   loyalty_points: number;
+  role?: string; // 'admin' | 'customer'
   created_at: string;
 }
 
@@ -163,11 +171,17 @@ export interface Profile {
 
 export interface Review {
   id: string;
-  user_id: string;
+  user_id?: string | null;
   product_slug: string;
+  author_name?: string | null;
+  author_email?: string | null;
   rating: number;
   comment?: string;
+  status: "approved" | "hidden";
+  is_deleted: boolean;
   is_verified: boolean;
+  admin_reply?: string | null;
+  ip_hash?: string | null;
   created_at: string;
-  profiles?: { full_name: string };
+  updated_at?: string;
 }

@@ -48,7 +48,7 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="container-page flex min-h-[calc(100vh-5rem)] items-center justify-center py-10">
+      <div className="container-page flex min-h-[calc(100vh-5rem)] items-center justify-center bg-muted/40 py-10">
         <div className="w-full max-w-md text-center">
           <span className="mb-4 block text-5xl">📧</span>
           <h1 className="font-display text-2xl font-bold">Vérifiez votre email</h1>
@@ -57,8 +57,8 @@ export default function RegisterPage() {
             Cliquez dessus pour activer votre compte.
           </p>
           <div className="mt-8">
-            <Button href="/auth/login" variant="outline">
-              Retour à la connexion
+            <Button asChild variant="outline">
+              <Link href="/auth/login">Retour à la connexion</Link>
             </Button>
           </div>
         </div>
@@ -67,7 +67,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="container-page flex min-h-[calc(100vh-5rem)] items-center justify-center py-10">
+    <div className="container-page flex min-h-[calc(100vh-5rem)] items-center justify-center bg-muted/40 py-10">
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-sm">
         <div className="text-center">
           <h1 className="font-display text-3xl font-bold">Créer un compte</h1>
@@ -117,9 +117,9 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="new-password"
-              minLength={6}
+              minLength={8}
               className="w-full rounded-lg border border-foreground/10 bg-card px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none"
-              placeholder="Minimum 6 caractères"
+              placeholder="Minimum 8 caractères"
             />
           </div>
 

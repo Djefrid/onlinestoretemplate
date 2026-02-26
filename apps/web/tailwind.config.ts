@@ -3,65 +3,101 @@ import defaultTheme from "tailwindcss/defaultTheme";
 import typography from "@tailwindcss/typography";
 
 const config: Config = {
-  content: [
+    darkMode: ["class"],
+    content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
   ],
   theme: {
-    extend: {
-      colors: {
-        // ── Base ──────────────────────────
-        background: "#F9F9F7",
-        foreground: "#1A1A1A",
-
-        // ── Marque (boutons CTA, liens) ──
-        primary: {
-          DEFAULT: "#CCA43B",
-          foreground: "#FFFFFF",
-          light: "#E0C36A",
-          dark: "#B08A2A",
-        },
-
-        // ── Secondaire (badges, tags) ────
-        secondary: {
-          DEFAULT: "#F0EDE5",
-          foreground: "#5C5540",
-        },
-
-        // ── Atténué (placeholders, sections) ──
-        muted: {
-          DEFAULT: "#F0EDE5",
-          foreground: "#8A8578",
-        },
-
-        // ── Erreur / danger ──────────────
-        destructive: {
-          DEFAULT: "#DC2626",
-          foreground: "#FFFFFF",
-        },
-
-        // ── Succès ───────────────────────
-        success: {
-          DEFAULT: "#16A34A",
-          foreground: "#FFFFFF",
-        },
-
-        // ── Utilitaires ──────────────────
-        border: "#E5E2DA",
-        input: "#E5E2DA",
-        ring: "#CCA43B",
-        card: {
-          DEFAULT: "#FEFDFB",
-          foreground: "#1A1A1A",
-        },
-      },
-      fontFamily: {
-        sans: ["var(--font-inter)", ...defaultTheme.fontFamily.sans],
-        display: ["var(--font-playfair)", ...defaultTheme.fontFamily.serif],
-      },
-    },
+  	extend: {
+  		colors: {
+  			background: 'hsl(var(--background))',
+  			foreground: 'hsl(var(--foreground))',
+  			primary: {
+  				DEFAULT: 'hsl(var(--primary))',
+  				foreground: 'hsl(var(--primary-foreground))',
+  				light: '#8B7FE8',
+  				dark: '#4D3EC2'
+  			},
+  			secondary: {
+  				DEFAULT: 'hsl(var(--secondary))',
+  				foreground: 'hsl(var(--secondary-foreground))'
+  			},
+  			muted: {
+  				DEFAULT: 'hsl(var(--muted))',
+  				foreground: 'hsl(var(--muted-foreground))'
+  			},
+  			destructive: {
+  				DEFAULT: 'hsl(var(--destructive))',
+  				foreground: 'hsl(var(--destructive-foreground))'
+  			},
+  			success: {
+  				DEFAULT: '#16A34A',
+  				foreground: '#FFFFFF'
+  			},
+  			border: 'hsl(var(--border))',
+  			input: 'hsl(var(--input))',
+  			ring: 'hsl(var(--ring))',
+  			card: {
+  				DEFAULT: 'hsl(var(--card))',
+  				foreground: 'hsl(var(--card-foreground))'
+  			},
+  			popover: {
+  				DEFAULT: 'hsl(var(--popover))',
+  				foreground: 'hsl(var(--popover-foreground))'
+  			},
+  			accent: {
+  				DEFAULT: 'hsl(var(--accent))',
+  				foreground: 'hsl(var(--accent-foreground))'
+  			},
+  			chart: {
+  				'1': 'hsl(var(--chart-1))',
+  				'2': 'hsl(var(--chart-2))',
+  				'3': 'hsl(var(--chart-3))',
+  				'4': 'hsl(var(--chart-4))',
+  				'5': 'hsl(var(--chart-5))'
+  			}
+  		},
+  		fontFamily: {
+  			sans: [
+  				'var(--font-inter)',
+                    ...defaultTheme.fontFamily.sans
+                ],
+  			display: [
+  				'var(--font-playfair)',
+                    ...defaultTheme.fontFamily.serif
+                ]
+  		},
+  		borderRadius: {
+  			lg: 'var(--radius)',
+  			md: 'calc(var(--radius) - 2px)',
+  			sm: 'calc(var(--radius) - 4px)'
+  		},
+  		keyframes: {
+  			'accordion-down': {
+  				from: {
+  					height: '0'
+  				},
+  				to: {
+  					height: 'var(--radix-accordion-content-height)'
+  				}
+  			},
+  			'accordion-up': {
+  				from: {
+  					height: 'var(--radix-accordion-content-height)'
+  				},
+  				to: {
+  					height: '0'
+  				}
+  			}
+  		},
+  		animation: {
+  			'accordion-down': 'accordion-down 0.2s ease-out',
+  			'accordion-up': 'accordion-up 0.2s ease-out'
+  		}
+  	}
   },
-  plugins: [typography],
+  plugins: [typography, require("tailwindcss-animate")],
 };
 
 export default config;

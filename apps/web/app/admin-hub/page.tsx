@@ -1,4 +1,4 @@
-import { Package, BarChart3, Users, CalendarDays } from "lucide-react";
+import { Package, BarChart3, Users, CalendarDays, MessageSquare } from "lucide-react";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { AdminHubCard } from "@/components/admin/AdminHubCard";
 import { AdminHeader } from "@/components/admin/AdminHeader";
@@ -91,7 +91,7 @@ export default async function AdminHubPage() {
           </p>
         </div>
 
-        {/* Bento Grid */}
+        {/* Bento Grid — outils externes */}
         <div className="grid gap-5 sm:grid-cols-2">
           {cards.map((card) => (
             <AdminHubCard
@@ -105,6 +105,19 @@ export default async function AdminHubPage() {
               accentGlow={card.accentGlow}
             />
           ))}
+        </div>
+
+        {/* Outils internes */}
+        <div className="mt-5 grid gap-5 sm:grid-cols-2">
+          <AdminHubCard
+            title="Avis Clients"
+            description="Modérer les avis produits : masquer, répondre, supprimer."
+            href="/admin-hub/reviews"
+            icon={MessageSquare}
+            accentColor="text-rose-400"
+            accentBorder="hover:border-rose-400/50"
+            accentGlow="hover:shadow-rose-400/10"
+          />
         </div>
       </div>
     </div>

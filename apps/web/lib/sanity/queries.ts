@@ -23,6 +23,10 @@ const productFields = /* groq */ `
   isOrganic,
   stock,
   isFeatured,
+  isBestSeller,
+  ratingAverage,
+  reviewsCount,
+  badge,
   category->{_id, title, "slug": slug.current}
 `;
 
@@ -81,7 +85,8 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Product
   }
 
   let ordering = "| order(_createdAt desc)";
-  if (filters.sort === "price-asc") ordering = "| order(price asc)";
+  if (filters.sort === "bestsellers") ordering = "| order(isFeatured desc, _createdAt desc)";
+  else if (filters.sort === "price-asc") ordering = "| order(price asc)";
   else if (filters.sort === "price-desc") ordering = "| order(price desc)";
   else if (filters.sort === "name") ordering = "| order(title asc)";
 
@@ -105,6 +110,28 @@ export async function getFeaturedProducts(): Promise<Product[]> {
   );
 }
 
+/* ── Best-Sellers (home) ──────────────── */
+
+export async function getBestSellers(): Promise<Product[]> {
+  if (!isSanityConfigured) return [];
+  // Priorité : isBestSeller == true ; fallback : isFeatured == true
+  const primary = await sanityClient.fetch<Product[]>(
+    /* groq */ `*[_type == "product" && isBestSeller == true] | order(_updatedAt desc) [0...8] {
+      ${productFields}
+    }`,
+    {},
+    { next: { revalidate: 60 } },
+  );
+  if (primary.length > 0) return primary;
+  return sanityClient.fetch(
+    /* groq */ `*[_type == "product" && isFeatured == true] | order(_createdAt desc) [0...8] {
+      ${productFields}
+    }`,
+    {},
+    { next: { revalidate: 60 } },
+  );
+}
+
 /* ── Single product by slug ───────────── */
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
@@ -113,6 +140,8 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     /* groq */ `*[_type == "product" && slug.current == $slug][0] {
       ${productFields},
       description,
+      preparationTips,
+      producerNote,
       relatedProducts[]->{${productFields}}
     }`,
     { slug },

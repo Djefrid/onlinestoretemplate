@@ -1,5 +1,9 @@
+"use client";
+
+import { motion, type Variants } from "framer-motion";
 import Image from "next/image";
-import { Button } from "@/components/ui/Button";
+import Link from "next/link";
+import { Flame, Leaf, ArrowRight, Store, BadgeCheck } from "lucide-react";
 
 interface HeroProps {
   heroTitle?: string;
@@ -8,102 +12,209 @@ interface HeroProps {
   bannerAlt?: string;
 }
 
+const fadeLeft: Variants = {
+  hidden: { opacity: 0, x: -40 },
+  show: { opacity: 1, x: 0, transition: { duration: 0.7, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] } },
+};
+
+const fadeRight: Variants = {
+  hidden: { opacity: 0, x: 40 },
+  show: { opacity: 1, x: 0, transition: { duration: 0.7, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number], delay: 0.15 } },
+};
+
+const stagger: Variants = {
+  show: { transition: { staggerChildren: 0.1 } },
+};
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] } },
+};
+
 export function Hero({ heroTitle, heroSubtitle, bannerUrl, bannerAlt }: HeroProps) {
-  const title = heroTitle || "L\u2019Afrique authentique, livrée à votre porte.";
+  const title = heroTitle || "L'excellence du terroir africain, chez vous.";
   const subtitle =
     heroSubtitle ||
     "Épices rares, produits frais et soins naturels importés directement du continent africain.";
-  const hasImage = Boolean(bannerUrl);
 
   return (
-    <section className="relative flex min-h-[85vh] items-center overflow-hidden">
-      {/* Background: image or gradient */}
-      <div className="absolute inset-0 -z-10">
-        {hasImage ? (
-          <>
-            <Image
-              src={bannerUrl!}
-              alt={bannerAlt || ""}
-              fill
-              className="object-cover"
-              priority
-            />
-            <div className="absolute inset-0 bg-black/40" />
-          </>
-        ) : (
-          <>
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/3" />
-            <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
-            <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-primary/3 blur-3xl" />
-          </>
-        )}
+    <section className="relative min-h-[90vh] overflow-hidden bg-background">
+      {/* Ambient background blobs */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -left-40 -top-40 h-[600px] w-[600px] rounded-full bg-primary/8 blur-[120px]" />
+        <div className="absolute -right-40 bottom-0 h-[500px] w-[500px] rounded-full bg-primary/5 blur-[100px]" />
       </div>
 
-      <div className="container-page w-full">
-        <div className="mx-auto max-w-3xl text-center">
-          {/* Eyebrow */}
-          <p
-            className={`mb-6 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium ${
-              hasImage ? "bg-white/20 text-white" : "bg-primary/10 text-primary-dark"
-            }`}
-          >
-            <span aria-hidden="true">✦</span>
-            Saveurs authentiques d&apos;Afrique
-          </p>
+      <div className="container-page flex min-h-[90vh] items-center">
+        <div className="grid w-full grid-cols-1 items-center gap-12 py-24 lg:grid-cols-12 lg:gap-8 lg:py-0">
 
-          {/* Heading */}
-          <h1
-            className={`font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl lg:text-7xl ${
-              hasImage ? "text-white" : ""
-            }`}
+          {/* ── Left column ─────────────────────── */}
+          <motion.div
+            className="lg:col-span-6 xl:col-span-5"
+            variants={stagger}
+            initial="hidden"
+            animate="show"
           >
-            {title}
-          </h1>
+            {/* Eyebrow badge */}
+            <motion.div variants={fadeUp}>
+              <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/8 px-4 py-1.5 text-sm font-medium text-primary">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                Saveurs authentiques d&apos;Afrique
+              </span>
+            </motion.div>
 
-          {/* Subtitle */}
-          <p
-            className={`mx-auto mt-6 max-w-xl text-lg leading-relaxed sm:text-xl ${
-              hasImage ? "text-white/80" : "text-foreground/60"
-            }`}
+            {/* Heading */}
+            <motion.h1
+              variants={fadeUp}
+              className="mt-6 font-display text-4xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-5xl xl:text-6xl"
+            >
+              {title}
+            </motion.h1>
+
+            {/* Subtitle */}
+            <motion.p
+              variants={fadeUp}
+              className="mt-6 max-w-lg text-lg leading-relaxed text-foreground/60"
+            >
+              {subtitle}
+            </motion.p>
+
+            {/* CTAs */}
+            <motion.div variants={fadeUp} className="mt-10 flex flex-wrap gap-4">
+              <motion.div whileTap={{ scale: 0.96 }} whileHover={{ scale: 1.02 }}>
+                <Link
+                  href="/shop"
+                  className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-7 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-shadow hover:shadow-primary/40"
+                >
+                  Commander maintenant
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              </motion.div>
+              <motion.div whileTap={{ scale: 0.96 }}>
+                <Link
+                  href="/appointments"
+                  className="inline-flex h-12 items-center gap-2 rounded-2xl border border-border bg-card px-7 text-sm font-semibold text-foreground transition-colors hover:border-primary/30 hover:bg-primary/5"
+                >
+                  Réserver un créneau
+                </Link>
+              </motion.div>
+            </motion.div>
+
+            {/* Social proof */}
+            <motion.div variants={fadeUp} className="mt-12 flex items-center gap-4">
+              <div className="flex -space-x-2">
+                {["🧑🏾", "👩🏿", "🧑🏽", "👨🏾"].map((emoji, i) => (
+                  <span
+                    key={i}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-secondary text-sm"
+                  >
+                    {emoji}
+                  </span>
+                ))}
+              </div>
+              <p className="text-sm text-foreground/50">
+                <span className="font-semibold text-foreground">+100</span> clients satisfaits
+              </p>
+            </motion.div>
+          </motion.div>
+
+          {/* ── Right column — image montage ─────── */}
+          <motion.div
+            className="relative hidden lg:col-span-6 lg:block xl:col-span-7"
+            variants={fadeRight}
+            initial="hidden"
+            animate="show"
           >
-            {subtitle}
-          </p>
+            <div className="relative h-[540px]">
 
-          {/* CTAs */}
-          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button href="/shop" size="lg">
-              Commander
-            </Button>
-            <Button href="/appointments" variant="outline" size="lg">
-              Réserver un créneau
-            </Button>
-          </div>
+              {/* Main card */}
+              <motion.div
+                className="absolute left-0 top-8 h-[420px] w-[340px] overflow-hidden rounded-3xl shadow-2xl"
+                style={{ rotate: -4 }}
+                whileHover={{ rotate: -2, y: -6, transition: { type: "spring", stiffness: 300 } }}
+              >
+                {bannerUrl ? (
+                  <Image
+                    src={bannerUrl}
+                    alt={bannerAlt || "Épicerie Africaine"}
+                    fill
+                    className="object-cover"
+                    priority
+                    sizes="340px"
+                  />
+                ) : (
+                  <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-primary/20 via-primary/10 to-secondary">
+                    <Store className="h-20 w-20 text-primary/50" aria-hidden="true" />
+                    <span className="mt-4 text-4xl">🌶️ 🥜 ✨</span>
+                  </div>
+                )}
+                {/* Overlay glint */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10" />
+              </motion.div>
 
-          {/* Trust signals */}
-          <div
-            className={`mt-16 flex flex-wrap items-center justify-center gap-3 sm:gap-8 text-sm ${
-              hasImage ? "text-white/60" : "text-foreground/40"
-            }`}
-          >
-            <div className="flex items-center gap-2 rounded-full border border-white/20 px-4 py-2 backdrop-blur-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-              </svg>
-              Livraison rapide
+              {/* Secondary card — spices */}
+              <motion.div
+                className="absolute bottom-8 right-4 h-[200px] w-[180px] overflow-hidden rounded-2xl shadow-xl"
+                style={{ rotate: 5 }}
+                whileHover={{ rotate: 3, y: -4, transition: { type: "spring", stiffness: 300 } }}
+              >
+                <div className="relative flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-amber-50 to-orange-100/80 px-4">
+                  {/* Cercle icon */}
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/15 ring-1 ring-amber-400/20">
+                    <Flame className="h-6 w-6 text-amber-600" strokeWidth={1.5} />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-amber-800/70">
+                      Sélection
+                    </p>
+                    <p className="mt-0.5 text-sm font-semibold text-amber-900">
+                      Épices rares
+                    </p>
+                  </div>
+                  {/* Dot déco */}
+                  <div className="absolute right-3 top-3 h-1.5 w-1.5 rounded-full bg-amber-400/40" />
+                </div>
+              </motion.div>
+
+              {/* Tertiary card — beauty */}
+              <motion.div
+                className="absolute right-16 top-4 h-[140px] w-[140px] overflow-hidden rounded-2xl shadow-lg"
+                style={{ rotate: 7 }}
+                whileHover={{ rotate: 5, y: -4, transition: { type: "spring", stiffness: 300 } }}
+              >
+                <div className="relative flex h-full w-full flex-col items-center justify-center gap-2.5 bg-gradient-to-br from-violet-50 to-purple-100/80 px-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-500/15 ring-1 ring-violet-400/20">
+                    <Leaf className="h-5 w-5 text-violet-600" strokeWidth={1.5} />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-violet-800/60">
+                      Bio
+                    </p>
+                    <p className="mt-0.5 text-xs font-semibold text-violet-900">
+                      Soins naturels
+                    </p>
+                  </div>
+                  <div className="absolute left-3 top-3 h-1.5 w-1.5 rounded-full bg-violet-400/40" />
+                </div>
+              </motion.div>
+
+              {/* Floating badge */}
+              <motion.div
+                className="absolute bottom-4 left-8 flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 shadow-lg"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8, duration: 0.5 }}
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600">
+                  <BadgeCheck className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="text-xs font-semibold text-foreground">Origine certifiée</p>
+                  <p className="text-[10px] text-foreground/50">Directement d&apos;Afrique</p>
+                </div>
+              </motion.div>
             </div>
-            <div className="flex items-center gap-2 rounded-full border border-white/20 px-4 py-2 backdrop-blur-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
-              </svg>
-              Paiement sécurisé
-            </div>
-            <div className="flex items-center gap-2 rounded-full border border-white/20 px-4 py-2 backdrop-blur-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-              </svg>
-              Produits authentiques
-            </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

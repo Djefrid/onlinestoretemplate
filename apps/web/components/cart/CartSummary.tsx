@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCartStore } from "@/lib/cart/store";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
@@ -57,8 +58,8 @@ export function CartSummary() {
       </div>
 
       <div className="mt-6">
-        <Button href="/checkout" size="lg" className="w-full">
-          Passer la commande
+        <Button asChild size="lg" className="w-full">
+          <Link href="/checkout">Passer la commande</Link>
         </Button>
       </div>
 

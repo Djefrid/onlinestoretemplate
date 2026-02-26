@@ -11,16 +11,44 @@ apps/web/out/
 dist/
 build/
 
-# Environment
+# Environment — tous les fichiers .env à tous les niveaux
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
+apps/web/.env
+apps/web/.env.local
+apps/web/.env.production
+apps/studio/.env
+apps/studio/.env.local
+apps/studio/.env.production
 
 # Sanity
 apps/studio/dist/
 apps/studio/node_modules/
+
+# Supabase CLI
+.supabase/
+supabase/.branches/
+supabase/.temp/
+
+# Vercel
+.vercel/
+
+# Turborepo
+.turbo/
+
+# Test coverage
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # System
 .DS_Store
@@ -33,10 +61,10 @@ Thumbs.db
 .idea/
 *.code-workspace
 
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Stitch / test screenshots
+stitch-*
+test-dore-*
+test-style-*
 
 # Misc
 *.tsbuildinfo

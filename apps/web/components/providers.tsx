@@ -3,6 +3,7 @@
 import { type ReactNode, useEffect } from "react";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { useCartStore } from "@/lib/cart/store";
+import { Toaster } from "@/components/ui/sonner";
 import {
   pullCartFromSupabase,
   pushCartToSupabase,
@@ -50,5 +51,10 @@ export function Providers({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <Toaster richColors position="bottom-right" />
+    </>
+  );
 }

@@ -1,10 +1,13 @@
 import Link from "next/link";
+import { getSiteSettings } from "@/lib/sanity/siteSettings";
 
 export const metadata = {
   title: "Paiement annulé — Épicerie Africaine",
 };
 
-export default function CancelPage() {
+export default async function CancelPage() {
+  const s = await getSiteSettings();
+  const email = s.email || "contact@epicerie-africaine.ca";
   return (
     <main className="container-page flex min-h-[70vh] flex-col items-center justify-center py-20 text-center">
       <div className="mx-auto max-w-lg">
@@ -52,10 +55,10 @@ export default function CancelPage() {
         <p className="mt-6 text-xs text-foreground/40">
           Besoin d&apos;aide ? Contactez-nous à{" "}
           <a
-            href="mailto:contact@epicerie-africaine.ca"
+            href={`mailto:${email}`}
             className="underline hover:text-foreground/60"
           >
-            contact@epicerie-africaine.ca
+            {email}
           </a>
         </p>
       </div>
