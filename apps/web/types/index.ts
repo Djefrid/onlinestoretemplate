@@ -20,6 +20,9 @@ export interface SiteSettings {
   openingHours?: string;
   deliveryZones?: string;
   pickupInstructions?: string;
+  shippingCost?: number;
+  freeShippingThreshold?: number;
+  pickupSlots?: string[];
   announcementBar?: {
     enabled: boolean;
     text?: string;
@@ -164,6 +167,11 @@ export interface Profile {
   phone?: string;
   loyalty_points: number;
   role?: string; // 'admin' | 'customer'
+  address_line1?: string;
+  address_line2?: string;
+  city?: string;
+  postal_code?: string;
+  province?: string;
   created_at: string;
 }
 
@@ -177,7 +185,7 @@ export interface Review {
   author_email?: string | null;
   rating: number;
   comment?: string;
-  status: "approved" | "hidden";
+  status: "approved" | "pending" | "hidden";
   is_deleted: boolean;
   is_verified: boolean;
   admin_reply?: string | null;

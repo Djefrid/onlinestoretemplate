@@ -1,42 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Truck, Store, CircleCheck } from "lucide-react";
 import { useCartStore } from "@/lib/cart/store";
-import { createClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import { useShippingConfig } from "@/lib/shipping/useShippingConfig";
 import type { DeliveryMode } from "@/types";
-
-const SHIPPING_COST = parseFloat(process.env.NEXT_PUBLIC_SHIPPING_COST || "5.99");
-const FREE_SHIPPING_THRESHOLD = parseFloat(process.env.NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD || "75");
-
-const PICKUP_SLOTS = [
-  "Lundi 10h–12h",
-  "Lundi 14h–17h",
-  "Mercredi 10h–12h",
-  "Mercredi 14h–17h",
-  "Vendredi 10h–12h",
-  "Vendredi 14h–17h",
-  "Samedi 10h–14h",
-];
 
 interface FormErrors {
   [key: string]: string | undefined;
 }
 
 export default function CheckoutPage() {
-  const router = useRouter();
   const items = useCartStore((s) => s.items);
   const subtotal = useCartStore((s) => s.subtotal());
-  const totalItems = useCartStore((s) => s.totalItems());
+  const { shippingCost: SHIPPING_COST, freeShippingThreshold: FREE_SHIPPING_THRESHOLD, pickupSlots: PICKUP_SLOTS } = useShippingConfig();
 
+  // Fix hydration mismatch — Zustand (localStorage) is unknown on server
+  const [mounted, setMounted] = useState(false);
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("delivery");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [apiError, setApiError] = useState("");
+  const [saveAddress, setSaveAddress] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   // Form state
   const [form, setForm] = useState({
@@ -51,31 +41,29 @@ export default function CheckoutPage() {
     pickupSlot: "",
   });
 
+  // Hydration fix
+  useEffect(() => { setMounted(true); }, []);
+
   // Pre-fill form from Supabase profile if user is logged in
   useEffect(() => {
-    const prefill = async () => {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("full_name, phone")
-          .eq("id", user.id)
-          .single();
-
+    fetch("/api/user/profile")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((profile) => {
+        if (!profile) return;
+        setUserId(profile.id);
         setForm((prev) => ({
           ...prev,
-          customerEmail: user.email || prev.customerEmail,
-          customerName: profile?.full_name || prev.customerName,
-          phone: profile?.phone || prev.phone,
+          customerEmail: profile.email || prev.customerEmail,
+          customerName: profile.full_name || prev.customerName,
+          phone: profile.phone || prev.phone,
+          line1: profile.address_line1 || prev.line1,
+          line2: profile.address_line2 || prev.line2,
+          city: profile.city || prev.city,
+          postalCode: profile.postal_code || prev.postalCode,
+          province: profile.province || prev.province,
         }));
-      } catch {
-        // Supabase not configured — keep empty form
-      }
-    };
-    prefill();
+      })
+      .catch(() => {});
   }, []);
 
   const updateField = (field: string, value: string) => {
@@ -86,6 +74,24 @@ export default function CheckoutPage() {
   const shippingFree = subtotal >= FREE_SHIPPING_THRESHOLD;
   const shipping = deliveryMode === "delivery" && !shippingFree ? SHIPPING_COST : 0;
   const total = subtotal + shipping;
+
+  // Skeleton pendant hydration (évite mismatch Zustand localStorage)
+  if (!mounted) {
+    return (
+      <div className="container-page section-padding">
+        <div className="h-10 w-48 animate-pulse rounded-xl bg-foreground/8" />
+        <div className="mt-10 flex flex-col gap-10 lg:flex-row">
+          <div className="flex-1 space-y-6">
+            <div className="h-32 animate-pulse rounded-2xl bg-foreground/5" />
+            <div className="h-48 animate-pulse rounded-2xl bg-foreground/5" />
+          </div>
+          <div className="w-full shrink-0 lg:w-80">
+            <div className="h-64 animate-pulse rounded-2xl bg-foreground/5" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Redirect if cart is empty
   if (items.length === 0) {
@@ -153,6 +159,25 @@ export default function CheckoutPage() {
         }),
       };
 
+      // Sauvegarder l'adresse dans le profil si demandé
+      if (saveAddress && userId && deliveryMode === "delivery") {
+        try {
+          await fetch("/api/user/profile", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              address_line1: form.line1 || null,
+              address_line2: form.line2 || null,
+              city: form.city || null,
+              postal_code: form.postalCode || null,
+              province: form.province || "QC",
+            }),
+          });
+        } catch {
+          // Non bloquant — on continue vers Stripe
+        }
+      }
+
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -192,21 +217,48 @@ export default function CheckoutPage() {
               Mode de récupération
             </h2>
             <div className="flex gap-3">
-              {(["delivery", "pickup"] as const).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setDeliveryMode(mode)}
-                  className={cn(
-                    "flex-1 rounded-xl border-2 px-4 py-3 text-sm font-medium transition-colors",
-                    deliveryMode === mode
-                      ? "border-primary bg-primary/5 text-primary-dark"
-                      : "border-foreground/10 text-foreground/50 hover:border-foreground/20",
-                  )}
-                >
-                  {mode === "delivery" ? "🚚 Livraison" : "🏪 Ramassage en magasin"}
-                </button>
-              ))}
+              {(["delivery", "pickup"] as const).map((mode) => {
+                const isSelected = deliveryMode === mode;
+                const Icon = mode === "delivery" ? Truck : Store;
+                const label = mode === "delivery" ? "Livraison" : "Ramassage";
+                const sublabel = mode === "delivery" ? "Livré à votre adresse" : "Récupérez en boutique";
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setDeliveryMode(mode)}
+                    className={cn(
+                      "relative flex-1 rounded-2xl border-2 p-4 text-left transition-all duration-200",
+                      isSelected
+                        ? "border-primary bg-primary/[0.05] shadow-sm"
+                        : "border-foreground/10 hover:border-foreground/25 hover:bg-foreground/[0.02]",
+                    )}
+                  >
+                    {isSelected && (
+                      <CircleCheck className="absolute right-3 top-3 h-4 w-4 text-primary" />
+                    )}
+                    <div
+                      className={cn(
+                        "mb-3 flex h-10 w-10 items-center justify-center rounded-full transition-colors",
+                        isSelected
+                          ? "bg-primary/15 text-primary"
+                          : "bg-foreground/[0.06] text-foreground/40",
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <p
+                      className={cn(
+                        "text-sm font-semibold",
+                        isSelected ? "text-primary-dark" : "text-foreground/60",
+                      )}
+                    >
+                      {label}
+                    </p>
+                    <p className="mt-0.5 text-xs text-foreground/40">{sublabel}</p>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -230,6 +282,7 @@ export default function CheckoutPage() {
                 onChange={(v) => updateField("customerEmail", v)}
                 error={errors.customerEmail}
                 autoComplete="email"
+                readOnly={!!userId}
               />
               <InputField
                 label="Téléphone"
@@ -280,10 +333,12 @@ export default function CheckoutPage() {
                   autoComplete="postal-code"
                 />
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-foreground/70">
+                  <label htmlFor="checkout-province" className="mb-1.5 block text-sm font-medium text-foreground/70">
                     Province
                   </label>
                   <select
+                    id="checkout-province"
+                    aria-label="Province"
                     value={form.province}
                     onChange={(e) => updateField("province", e.target.value)}
                     className="w-full rounded-lg border border-foreground/10 bg-card px-3 py-2.5 text-sm focus:border-primary focus:outline-none"
@@ -301,6 +356,19 @@ export default function CheckoutPage() {
                   </select>
                 </div>
               </div>
+
+              {/* Sauvegarder adresse */}
+              {userId && (
+                <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-foreground/60">
+                  <input
+                    type="checkbox"
+                    checked={saveAddress}
+                    onChange={(e) => setSaveAddress(e.target.checked)}
+                    className="h-4 w-4 rounded border-foreground/20 accent-primary"
+                  />
+                  Mémoriser cette adresse
+                </label>
+              )}
             </div>
           )}
 
@@ -449,6 +517,7 @@ function InputField({
   type = "text",
   autoComplete,
   className,
+  readOnly = false,
 }: {
   label: string;
   value: string;
@@ -457,22 +526,29 @@ function InputField({
   type?: string;
   autoComplete?: string;
   className?: string;
+  readOnly?: boolean;
 }) {
+  const id = `field-${label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")}`;
   return (
     <div className={className}>
-      <label className="mb-1.5 block text-sm font-medium text-foreground/70">
+      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-foreground/70">
         {label}
       </label>
       <input
+        id={id}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         autoComplete={autoComplete}
+        aria-label={label}
+        readOnly={readOnly}
         className={cn(
-          "w-full rounded-lg border bg-card px-3 py-2.5 text-sm transition-colors focus:outline-none",
-          error
-            ? "border-red-300 focus:border-red-500"
-            : "border-foreground/10 focus:border-primary",
+          "w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none",
+          readOnly
+            ? "cursor-default border-foreground/5 bg-foreground/[0.03] text-foreground/60"
+            : error
+              ? "border-red-300 bg-card focus:border-red-500"
+              : "border-foreground/10 bg-card focus:border-primary",
         )}
       />
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}

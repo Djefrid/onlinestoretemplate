@@ -4,20 +4,15 @@ import Link from "next/link";
 import { useCartStore } from "@/lib/cart/store";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
-
-const SHIPPING_COST = parseFloat(
-  process.env.NEXT_PUBLIC_SHIPPING_COST || "5.99",
-);
-const FREE_SHIPPING_THRESHOLD = parseFloat(
-  process.env.NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD || "75",
-);
+import { useShippingConfig } from "@/lib/shipping/useShippingConfig";
 
 export function CartSummary() {
   const subtotal = useCartStore((s) => s.subtotal());
   const totalItems = useCartStore((s) => s.totalItems());
+  const { shippingCost, freeShippingThreshold } = useShippingConfig();
 
-  const shippingFree = subtotal >= FREE_SHIPPING_THRESHOLD;
-  const shipping = shippingFree ? 0 : SHIPPING_COST;
+  const shippingFree = subtotal >= freeShippingThreshold;
+  const shipping = shippingFree ? 0 : shippingCost;
   const total = subtotal + shipping;
 
   return (
@@ -45,7 +40,7 @@ export function CartSummary() {
 
         {!shippingFree && (
           <p className="text-xs text-foreground/40">
-            Livraison gratuite à partir de {formatPrice(FREE_SHIPPING_THRESHOLD)}
+            Livraison gratuite à partir de {formatPrice(freeShippingThreshold)}
           </p>
         )}
 

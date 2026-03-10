@@ -140,6 +140,7 @@ supabase/migrations/
 ├── 005_admin_role.sql        # Colonne role (admin/customer)
 ├── 006_security_fixes.sql    # Correctifs sécurité (RLS, RPC, search_path)
 ├── 007_audit_logs.sql        # Table audit_logs pour traçabilité admin
+├── 008_profile_address.sql   # Colonnes adresse sur profiles (pré-remplissage checkout)
 └── all.sql                   # Script complet (toutes migrations)
 ```
 
@@ -328,12 +329,17 @@ Tous les headers de sécurité sont configurés dans `next.config.mjs` :
 | **SQL injection search_path** | `SET search_path = public` sur toutes les fonctions `SECURITY DEFINER` |
 | **Mot de passe faible** | Minimum 8 caractères (norme NIST) |
 | **CVE-2025-29927** | Header `x-middleware-subrequest` bloqué dans le middleware |
+| **CVE-2025-67779** | Next.js mis à jour vers 14.2.35 (DoS via RSC corrigé) |
+| **Avis invités non modérés** | Statut `pending` pour les invités, `approved` uniquement pour les membres |
+| **Manipulation des montants webhook** | Validation `subtotalCents > 0` et `shippingCents >= 0` |
 | **Bots / spam checkout** | Honeypot anti-bot sur la route `/api/checkout` |
 | **Session admin trop longue** | Expiration forcée après 4h, re-authentification obligatoire |
 | **Webhook double traitement** | `maybeSingle()` + vérification erreur DB avant traitement |
 | **Traçabilité admin** | Table `audit_logs` (RLS bloqué, écriture service_role uniquement) |
 | **Service client mal configuré** | Validation obligatoire de `SUPABASE_SERVICE_ROLE_KEY` |
 | **security.txt** | Route `/.well-known/security.txt` (RFC 9116) |
+| **CSP renforcée** | `unsafe-eval` supprimé de `script-src` (non requis en production) |
+| **Admin non indexé** | `/admin-hub/` ajouté au `robots.txt` disallow |
 
 ### Règles importantes
 

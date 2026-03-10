@@ -1,14 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 
 export default function RegisterPage() {
-  const router = useRouter();
-
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,23 +17,16 @@ export default function RegisterPage() {
     setError("");
     setLoading(true);
 
-    if (password.length < 8) {
-      setError("Le mot de passe doit contenir au moins 8 caractères.");
-      setLoading(false);
-      return;
-    }
-
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName },
-      },
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, full_name: fullName }),
     });
 
-    if (authError) {
-      setError(authError.message);
+    const json = await res.json();
+
+    if (!res.ok) {
+      setError(json.error || "Une erreur est survenue.");
       setLoading(false);
       return;
     }

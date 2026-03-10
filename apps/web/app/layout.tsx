@@ -9,6 +9,7 @@ import { ShopClosedBanner } from "@/components/layout/ShopClosedBanner";
 import { getSiteSettings } from "@/lib/sanity/siteSettings";
 import { getCategories } from "@/lib/sanity/queries";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { Analytics } from "@vercel/analytics/next";
 import "@/styles/globals.css";
 
 const inter = Inter({
@@ -93,6 +94,7 @@ export default async function RootLayout({
           </main>
           {!isAdmin && <Footer settings={settings} categories={categories} />}
         </Providers>
+        <Analytics />
       </body>
     </html>
   );

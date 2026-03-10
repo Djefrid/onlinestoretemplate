@@ -98,7 +98,7 @@ poweredByHeader: false
 
 ```
 default-src 'self'
-script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://app.cal.com
+script-src 'self' 'unsafe-inline' https://js.stripe.com https://app.cal.com
 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com
 img-src 'self' data: blob: https://cdn.sanity.io https://*.supabase.co
 font-src 'self' https://fonts.gstatic.com
@@ -128,10 +128,16 @@ upgrade-insecure-requests
 | `object-src 'none'` | Bloque Flash, Java applets | Legacy dangereux |
 | `upgrade-insecure-requests` | Force HTTP vers HTTPS | Securite transport |
 
+### Note sur unsafe-eval :
+- `unsafe-eval` a ete supprime de `script-src` (Next.js 14 n'en a pas besoin en production)
+- En developpement, React Fast Refresh utilise `eval()` — mais la CSP de prod ne le requiert pas
+- Source : https://nextjs.org/docs/app/guides/content-security-policy
+
 ### Comment adapter a un nouveau projet :
 - Remplacer les domaines Stripe/Cal.com/Sanity par tes propres services
 - Ajouter tout domaine tiers dans la directive appropriee
 - **Ne jamais ajouter `*` dans aucune directive**
+- **Ne jamais ajouter `unsafe-eval` en production** (seulement requis en dev pour React)
 
 ---
 
@@ -1015,7 +1021,7 @@ dig TXT _dmarc.epicerie-africaine.ca
  2. [x] X-Frame-Options: DENY
  3. [x] X-Content-Type-Options: nosniff
  4. [x] Strict-Transport-Security (HSTS preload, 2 ans)
- 5. [x] Content-Security-Policy (CSP stricte, whitelist par service)
+ 5. [x] Content-Security-Policy (CSP stricte, sans unsafe-eval, whitelist par service)
  6. [x] Cross-Origin-Resource-Policy: same-origin
  7. [x] Cross-Origin-Opener-Policy: same-origin
  8. [x] Permissions-Policy (tout desactive sauf fullscreen)

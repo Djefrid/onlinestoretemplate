@@ -149,6 +149,41 @@ export const siteSettings = defineType({
       rows: 6,
       description: "Adresse, créneaux, délai de conservation, etc.",
     }),
+    defineField({
+      name: "shippingCost",
+      title: "Frais de livraison (CAD)",
+      type: "number",
+      group: "delivery",
+      initialValue: 5.99,
+      validation: (r) => r.required().min(0).error("Montant requis"),
+      description: "Ex: 5.99 — Frais appliqués sous le seuil de livraison gratuite",
+    }),
+    defineField({
+      name: "freeShippingThreshold",
+      title: "Seuil livraison gratuite (CAD)",
+      type: "number",
+      group: "delivery",
+      initialValue: 75,
+      validation: (r) => r.required().min(0).error("Seuil requis"),
+      description: "Ex: 75 — Livraison offerte au-dessus de ce montant",
+    }),
+    defineField({
+      name: "pickupSlots",
+      title: "Créneaux de retrait en boutique",
+      type: "array",
+      group: "delivery",
+      of: [{ type: "string" }],
+      initialValue: [
+        "Lundi 10h–12h",
+        "Lundi 14h–17h",
+        "Mercredi 10h–12h",
+        "Mercredi 14h–17h",
+        "Vendredi 10h–12h",
+        "Vendredi 14h–17h",
+        "Samedi 10h–14h",
+      ],
+      description: "Créneaux proposés lors du checkout pour le retrait en boutique",
+    }),
 
     // ── F) Barre d'annonce ───────────────────
     defineField({

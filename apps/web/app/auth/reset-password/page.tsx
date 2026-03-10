@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 
 export default function ResetPasswordPage() {
@@ -16,16 +15,15 @@ export default function ResetPasswordPage() {
     setError("");
     setLoading(true);
 
-    const supabase = createClient();
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-      email,
-      {
-        redirectTo: `${window.location.origin}/auth/callback?next=/account`,
-      },
-    );
+    const res = await fetch("/api/auth/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
 
-    if (resetError) {
-      setError(resetError.message);
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setError(json.error || "Une erreur est survenue.");
       setLoading(false);
       return;
     }

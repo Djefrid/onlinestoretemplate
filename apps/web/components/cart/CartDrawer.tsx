@@ -9,20 +9,17 @@ import { CartItem } from "./CartItem";
 import { Button } from "@/components/ui/Button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { formatPrice } from "@/lib/utils";
-
-const SHIPPING_COST = parseFloat(process.env.NEXT_PUBLIC_SHIPPING_COST || "5.99");
-const FREE_SHIPPING_THRESHOLD = parseFloat(
-  process.env.NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD || "75",
-);
+import { useShippingConfig } from "@/lib/shipping/useShippingConfig";
 
 export function CartDrawer() {
   const { isCartOpen, closeCart } = useCartUiStore();
   const items = useCartStore((s) => s.items);
   const subtotal = useCartStore((s) => s.subtotal());
   const totalItems = useCartStore((s) => s.totalItems());
+  const { shippingCost, freeShippingThreshold } = useShippingConfig();
 
-  const shippingFree = subtotal >= FREE_SHIPPING_THRESHOLD;
-  const shipping = shippingFree ? 0 : SHIPPING_COST;
+  const shippingFree = subtotal >= freeShippingThreshold;
+  const shipping = shippingFree ? 0 : shippingCost;
   const total = subtotal + shipping;
 
   return (
@@ -83,7 +80,7 @@ export function CartDrawer() {
                 </div>
                 {!shippingFree && (
                   <p className="text-xs text-foreground/40">
-                    Livraison gratuite à partir de {formatPrice(FREE_SHIPPING_THRESHOLD)}
+                    Livraison gratuite à partir de {formatPrice(freeShippingThreshold)}
                   </p>
                 )}
                 <div className="flex justify-between border-t border-foreground/[0.07] pt-3 text-base font-bold">

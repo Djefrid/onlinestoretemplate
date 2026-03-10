@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice } from "@/lib/utils";
 import { AccountActions } from "./AccountActions";
+import { EditProfileForm } from "./EditProfileForm";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +22,7 @@ export default async function AccountPage() {
   // Fetch profile
   const { data: profile } = await supabase
     .from("profiles")
-    .select("*")
+    .select("full_name, phone, loyalty_points, address_line1, address_line2, city, postal_code, province")
     .eq("id", user.id)
     .single();
 
@@ -64,19 +65,7 @@ export default async function AccountPage() {
       <section className="mt-10">
         <h2 className="mb-4 font-display text-xl font-bold">Profil</h2>
         <div className="rounded-2xl border border-foreground/5 bg-card p-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <p className="text-xs text-foreground/40">Nom</p>
-              <p className="mt-1 font-medium">
-                {profile?.full_name || "Non renseigné"}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-foreground/40">Téléphone</p>
-              <p className="mt-1 font-medium">
-                {profile?.phone || "Non renseigné"}
-              </p>
-            </div>
+          <div className="mb-6 grid gap-4 sm:grid-cols-2">
             <div>
               <p className="text-xs text-foreground/40">Email</p>
               <p className="mt-1 font-medium">{user.email}</p>
@@ -85,6 +74,17 @@ export default async function AccountPage() {
               <p className="text-xs text-foreground/40">Points fidélité</p>
               <p className="mt-1 font-medium">{profile?.loyalty_points ?? 0}</p>
             </div>
+          </div>
+          <div className="border-t border-foreground/5 pt-5">
+            <EditProfileForm
+              initialName={profile?.full_name ?? ""}
+              initialPhone={profile?.phone ?? ""}
+              initialAddressLine1={profile?.address_line1 ?? ""}
+              initialAddressLine2={profile?.address_line2 ?? ""}
+              initialCity={profile?.city ?? ""}
+              initialPostalCode={profile?.postal_code ?? ""}
+              initialProvince={profile?.province ?? "QC"}
+            />
           </div>
         </div>
       </section>

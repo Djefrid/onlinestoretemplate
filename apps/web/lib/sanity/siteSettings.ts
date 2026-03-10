@@ -22,6 +22,9 @@ const SITE_SETTINGS_QUERY = `
     openingHours,
     deliveryZones,
     pickupInstructions,
+    shippingCost,
+    freeShippingThreshold,
+    pickupSlots,
     announcementBar {
       enabled,
       text,
@@ -58,6 +61,17 @@ const DEFAULT_SETTINGS: SiteSettings = {
   },
   shopStatus: { isOpen: true },
   announcementBar: { enabled: false },
+  shippingCost: parseFloat(process.env.NEXT_PUBLIC_SHIPPING_COST || "5.99"),
+  freeShippingThreshold: parseFloat(process.env.NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD || "75"),
+  pickupSlots: [
+    "Lundi 10h–12h",
+    "Lundi 14h–17h",
+    "Mercredi 10h–12h",
+    "Mercredi 14h–17h",
+    "Vendredi 10h–12h",
+    "Vendredi 14h–17h",
+    "Samedi 10h–14h",
+  ],
 };
 
 export async function getSiteSettings(): Promise<SiteSettings> {

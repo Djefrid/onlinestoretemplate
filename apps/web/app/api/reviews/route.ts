@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
         author_email: author_email?.trim() || null,
         rating,
         comment: comment.trim(),
-        status: "approved",
+        status: userId ? "approved" : "pending", // Invités → modération admin
         is_verified: isVerified,
         ip_hash: ipHash,
         user_agent_hash: uaHash,

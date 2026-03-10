@@ -4,12 +4,9 @@ import { checkoutSchema } from "@/lib/validators/checkout";
 import { createClient } from "@/lib/supabase/server";
 import { isSanityConfigured } from "@/lib/sanity/client";
 import { getPricesBySlugs } from "@/lib/sanity/queries";
+import { getSiteSettings } from "@/lib/sanity/siteSettings";
 
-const SHIPPING_COST = parseFloat(process.env.NEXT_PUBLIC_SHIPPING_COST || "5.99");
-const FREE_SHIPPING_THRESHOLD = parseFloat(
-  process.env.NEXT_PUBLIC_FREE_SHIPPING_THRESHOLD || "75",
-);
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3007";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,7 +63,15 @@ export async function POST(request: NextRequest) {
         };
       });
     } else {
-      // Sanity not configured (dev mode) — use client prices as fallback
+      // Sanity not configured (dev mode) — validate client prices before use
+      for (const item of data.items) {
+        if (!item.price || item.price < 0.01 || item.quantity < 1) {
+          return NextResponse.json(
+            { error: "Prix ou quantité invalide" },
+            { status: 400 },
+          );
+        }
+      }
       verifiedItems = data.items.map((item) => ({
         name: item.name,
         price: item.price,
@@ -97,6 +102,11 @@ export async function POST(request: NextRequest) {
     } catch {
       // Supabase not configured or auth failed — continue as guest
     }
+
+    // Fetch shipping config from Sanity (serveur — source de vérité)
+    const siteSettings = await getSiteSettings();
+    const SHIPPING_COST = siteSettings.shippingCost ?? 5.99;
+    const FREE_SHIPPING_THRESHOLD = siteSettings.freeShippingThreshold ?? 75;
 
     // Calculate shipping with VERIFIED prices
     const subtotal = verifiedItems.reduce(

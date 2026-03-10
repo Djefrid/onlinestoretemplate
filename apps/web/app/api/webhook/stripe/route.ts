@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { resend, isResendConfigured, FROM_EMAIL } from "@/lib/resend/client";
+import { buildOrderConfirmationEmail } from "@/lib/resend/emails/orderConfirmation";
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -105,6 +107,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const totalCents = session.amount_total || 0;
   const shippingCents = totalCents - subtotalCents;
 
+  // SECURITY: Vérifier cohérence des montants
+  if (subtotalCents <= 0 || shippingCents < 0) {
+    console.error("[webhook] Montants incohérents — subtotal:", subtotalCents, "shipping:", shippingCents);
+    return; // Stripe réessaiera — on refuse silencieusement
+  }
+
   // Build address JSONB if delivery
   const address =
     metadata.deliveryMode === "delivery"
@@ -206,6 +214,50 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
           "[webhook] RPC increment_loyalty not found, manual update applied",
         );
       }
+    }
+  }
+
+  // ── 9. Send order confirmation email ──
+  const customerEmail = session.customer_email;
+  if (isResendConfigured && resend && customerEmail) {
+    try {
+      const { subject, html } = buildOrderConfirmationEmail({
+        orderId: order.id,
+        customerName: metadata.customerName || "Client",
+        customerEmail,
+        deliveryMode: (metadata.deliveryMode as "delivery" | "pickup") || "delivery",
+        items: items.map((i) => ({
+          name: i.name,
+          quantity: i.quantity,
+          price_cents: i.price_cents,
+        })),
+        subtotalCents,
+        shippingCents: Math.max(shippingCents, 0),
+        totalCents,
+        address: address
+          ? {
+              line1: address.line1,
+              line2: address.line2 || undefined,
+              city: address.city,
+              postalCode: address.postalCode,
+              province: address.province,
+              country: address.country,
+            }
+          : null,
+        pickupSlot: metadata.pickupSlot || null,
+      });
+
+      await resend.emails.send({
+        from: FROM_EMAIL,
+        to: customerEmail,
+        subject,
+        html,
+      });
+
+      console.log("[webhook] Confirmation email sent to:", customerEmail);
+    } catch (emailErr) {
+      // Non-blocking — order is already saved, don't fail the webhook
+      console.error("[webhook] Failed to send confirmation email:", emailErr);
     }
   }
 

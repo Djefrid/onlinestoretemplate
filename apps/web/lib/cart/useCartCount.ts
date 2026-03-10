@@ -12,6 +12,11 @@ import { isSupabaseConfigured } from "@/lib/supabase/client";
 export function useCartCount(): number {
   const zustandCount = useCartStore((s) => s.totalItems());
   const [dbCount, setDbCount] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -84,5 +89,7 @@ export function useCartCount(): number {
   }, []);
 
   // Priorité : Supabase (connecté) › Zustand (invité)
+  // Retourner 0 avant hydration pour éviter la différence server/client
+  if (!mounted) return 0;
   return dbCount ?? zustandCount;
 }

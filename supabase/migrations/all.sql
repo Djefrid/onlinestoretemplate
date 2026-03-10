@@ -268,3 +268,15 @@ CREATE POLICY "No public access to audit logs"
 CREATE INDEX idx_audit_logs_actor ON audit_logs(actor_id);
 CREATE INDEX idx_audit_logs_action ON audit_logs(action);
 CREATE INDEX idx_audit_logs_created ON audit_logs(created_at DESC);
+
+
+-- ═══════════════════════════════════════════════════
+-- 8/8 — Colonnes adresse sur profiles (pré-remplissage checkout)
+-- ═══════════════════════════════════════════════════
+
+ALTER TABLE profiles
+  ADD COLUMN IF NOT EXISTS address_line1  TEXT,
+  ADD COLUMN IF NOT EXISTS address_line2  TEXT,
+  ADD COLUMN IF NOT EXISTS city           TEXT,
+  ADD COLUMN IF NOT EXISTS postal_code    TEXT,
+  ADD COLUMN IF NOT EXISTS province       TEXT DEFAULT 'QC';
